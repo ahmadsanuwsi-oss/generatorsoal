@@ -88,6 +88,57 @@
       ]
     };
 
+    const isOsnEligibleSubject = (level, subject) => {
+      if (!level || !subject) return false;
+      const s = String(subject).trim().toLowerCase();
+      if (level === 'MI') {
+        return (
+          s === 'matematika' ||
+          s === 'ipa' ||
+          s === 'ips' ||
+          s === 'ipas (ilmu pengetahuan alam dan sosial)'
+        );
+      }
+      return false;
+    };
+
+    const isOmiEligibleSubject = (level, subject) => {
+      if (!level || !subject) return false;
+      const s = String(subject).trim().toLowerCase();
+      if (level === 'MI') {
+        return (
+          s === 'matematika' ||
+          s === 'ipa' ||
+          s === 'ipas (ilmu pengetahuan alam dan sosial)'
+        );
+      }
+      return false;
+    };
+
+    const buildAutoTopicByAssessment = (cfg) => {
+      const type = String(cfg?.assessmentType || '');
+      const parts = [cfg?.curriculum, 'MI', cfg?.grade, cfg?.subject]
+        .map((v) => String(v || '').trim())
+        .filter(Boolean);
+      const prefix = parts.join(' ');
+      if (type === 'STS (Sumatif Tengah Semester)') {
+        return `${prefix ? prefix + ' ' : ''}Tengah semester`.trim();
+      }
+      if (type === 'SAS (Sumatif Akhir Semester)') {
+        return `${prefix ? prefix + ' ' : ''}Semester 1 atau 2`.trim();
+      }
+      if (type === 'TKA') {
+        return `${prefix ? prefix + ' ' : ''}Tes Kemampuan Akademik (TKA) Madrasah Ibtidaiyah`.trim();
+      }
+      if (type === 'OSN') {
+        return `${prefix ? prefix + ' ' : ''}Latihan Olimpiade Sains Nasional (OSN) MI`.trim();
+      }
+      if (type === 'OMI') {
+        return `${prefix ? prefix + ' ' : ''}Latihan Olimpiade Madrasah Indonesia (OMI) MI Terintegrasi`.trim();
+      }
+      return null;
+    };
+
     // ============================================================================
     // DATA DUMMY AKUN ADMIN & PENGGUNA
     // ============================================================================
@@ -200,6 +251,7 @@
         matchingDistractorCount: '0'
       });
 
+      const [isManualSubject, setIsManualSubject] = useState(false);
       const [loading, setLoading] = useState(false);
       const [generationSuccess, setGenerationSuccess] = useState(false);
       const [progress, setProgress] = useState(0);
@@ -366,8 +418,10 @@
         const useAr = isArabicActive(cfg);
         const useEn = isEnglishActive(cfg);
         const n = idx + 1;
-        const bloomLevels = ['C2', 'C3', 'C4'];
+        const isHotsAssess = ['OSN', 'OMI', 'TKA'].includes(cfg.assessmentType);
+        const bloomLevels = isHotsAssess ? ['C4', 'C5', 'C6'] : ['C2', 'C3', 'C4'];
         const bloomLevel = bloomLevels[idx % bloomLevels.length];
+        const assessPrefix = cfg.assessmentType ? `[${cfg.assessmentType}] ` : '';
 
         if (bentukSoal === 'PG Kompleks') {
           const rawOpts = useAr
@@ -397,7 +451,7 @@
               ? `اقْرَأِ العِبَارَاتِ الآتِيَةَ المُتَعَلِّقَةَ بِمَوْضُوْعِ (${top})، مَا العِبَارَاتُ الصَّحِيْحَةُ مِمَّا يَأْتِي؟`
               : useEn
               ? `Read the following statements regarding ${top}. Which of the following statements are correct?`
-              : `Perhatikan studi kasus penerapan konsep ${top} pada mata pelajaran ${subj} (MI) berikut. Manakah pernyataan analisis yang tepat?`,
+              : `${assessPrefix}Perhatikan studi kasus penerapan konsep ${top} pada mata pelajaran ${subj} (MI) berikut. Manakah pernyataan analisis yang tepat?`,
             matchingPremises: [],
             options: rawOpts,
             answer: `A, B, dan D`,
@@ -436,7 +490,7 @@
 
           return {
             bentukSoal: 'Menjodohkan',
-            question: `Pasangkanlah setiap pernyataan pada kolom kiri dengan jawaban yang paling tepat pada kolom kanan terkait materi ${top}!`,
+            question: `${assessPrefix}Pasangkanlah setiap pernyataan pada kolom kiri dengan jawaban yang paling tepat pada kolom kanan terkait materi ${top}!`,
             matchingPremises: premises,
             options: shuffledOpts,
             answer: pairKeys,
@@ -462,7 +516,7 @@
 
           return {
             bentukSoal: 'Benar/Salah',
-            question: `Tentukan apakah pernyataan berikut Benar atau Salah!\n"${stmt}"`,
+            question: `${assessPrefix}Tentukan apakah pernyataan berikut Benar atau Salah!\n"${stmt}"`,
             matchingPremises: [],
             options: ['Benar', 'Salah'],
             answer: isTrueKey ? 'A. Benar' : 'B. Salah',
@@ -482,8 +536,8 @@
           return {
             bentukSoal: 'Isian Singkat',
             question: isMathSci
-              ? `Perbandingan banyak kelereng Ahmad dan Budi adalah 3 : 4. Jika banyak kelereng Budi adalah ${baseVal} butir, maka banyak kelereng Ahmad adalah ... butir.`
-              : `Dalam pelajaran ${subj} mengenai ${top}, sikap atau tindakan utama yang harus diamalkan oleh siswa madrasah adalah ...`,
+              ? `${assessPrefix}Perbandingan banyak kelereng Ahmad dan Budi adalah 3 : 4. Jika banyak kelereng Budi adalah ${baseVal} butir, maka banyak kelereng Ahmad adalah ... butir.`
+              : `${assessPrefix}Dalam pelajaran ${subj} mengenai ${top}, sikap atau tindakan utama yang harus diamalkan oleh siswa madrasah adalah ...`,
             matchingPremises: [],
             options: [],
             answer: isMathSci ? `${ansVal}` : `Mengamalkan nilai kebaikan sesuai ajaran ${top}`,
@@ -503,8 +557,8 @@
           return {
             bentukSoal: 'Uraian',
             question: isMathSci
-              ? `Sebuah kebun madrasah berbentuk persegi panjang memiliki panjang ${pVal * 3} meter dan lebar ${pVal * 2} meter. Hitunglah keliling dan luas kebun madrasah tersebut beserta langkah-langkahnya!`
-              : `Jelaskan 3 contoh penerapan materi ${top} dalam kehidupan sehari-hari di lingkungan madrasah maupun di rumah beserta manfaatnya!`,
+              ? `${assessPrefix}Sebuah kebun madrasah berbentuk persegi panjang memiliki panjang ${pVal * 3} meter dan lebar ${pVal * 2} meter. Hitunglah keliling dan luas kebun madrasah tersebut beserta langkah-langkahnya!`
+              : `${assessPrefix}Jelaskan 3 contoh penerapan materi ${top} dalam kehidupan sehari-hari di lingkungan madrasah maupun di rumah beserta manfaatnya!`,
             matchingPremises: [],
             options: [],
             answer: isMathSci
@@ -556,7 +610,7 @@
             ? `بِنَاءً عَلَى دِرَاسَتِكَ لِمَوْضُوْعِ (${top}) [السُّؤَالُ ${n}]، مَا العِبَارَةُ الأَكْثَرُ دِقَّةً وَصِحَّةً مِمَّا يَأْتِي؟`
             : useEn
             ? `Based on ${top} in ${subj} (Question ${n}), which of the following statements is correct?`
-            : `Dalam mempelajari materi ${top} pada mata pelajaran ${subj} (butir ke-${n}), perilaku atau pemahaman yang paling tepat adalah...`,
+            : `${assessPrefix}Dalam mempelajari materi ${top} pada mata pelajaran ${subj} (butir ke-${n}), perilaku atau pemahaman yang paling tepat adalah...`,
           matchingPremises: [],
           options: pgOpts,
           answer: `${getOptionLabel(targetIdx, useAr)}. ${pgOpts[targetIdx]}`,
@@ -609,7 +663,22 @@
           setConfig((prev) => ({ ...prev, [name]: numVal }));
           return;
         }
-        setConfig((prev) => ({ ...prev, level: 'MI', [name]: value }));
+
+        const nextCfg = { ...config, level: 'MI', [name]: value };
+        if (name === 'subject' && nextCfg.assessmentType === 'OSN' && !isOsnEligibleSubject('MI', value)) {
+          nextCfg.assessmentType = '';
+        }
+        if (name === 'subject' && nextCfg.assessmentType === 'OMI' && !isOmiEligibleSubject('MI', value)) {
+          nextCfg.assessmentType = '';
+        }
+        if (['curriculum', 'grade', 'subject'].includes(name)) {
+          const prevAuto = buildAutoTopicByAssessment(config);
+          const nextAuto = buildAutoTopicByAssessment(nextCfg);
+          if (nextAuto && (!config.topic.trim() || config.topic === prevAuto)) {
+            nextCfg.topic = nextAuto;
+          }
+        }
+        setConfig(nextCfg);
       };
 
       const handleGenerateQuiz = () => {
@@ -676,7 +745,7 @@
         let html = `<div style="text-align:center;font-family:'Times New Roman',serif;margin-bottom:16px;">
           <div style="font-size:12pt;font-weight:bold;">KKMI KECAMATAN WONOMERTO</div>
           ${config.schoolName ? `<div style="font-size:14pt;font-weight:bold;">${config.schoolName.toUpperCase()}</div>` : ''}
-          <div style="font-size:13pt;font-weight:bold;">NASKAH UJIAN ${String(config.subject || '').toUpperCase()}</div>
+          <div style="font-size:13pt;font-weight:bold;">NASKAH UJIAN ${String(config.subject || '').toUpperCase()}${config.assessmentType ? ' - ' + config.assessmentType.toUpperCase() : ''}</div>
           <div style="font-size:11pt;">Jenjang: Madrasah Ibtidaiyah (MI) &bull; Kelas: ${config.grade} &bull; Kurikulum: ${config.curriculum}</div>
         </div><hr/>`;
 
@@ -738,6 +807,16 @@
       };
 
       const totalQuestions = getTotalQuestions();
+      const showOsnOption = isOsnEligibleSubject('MI', config.subject);
+      const showOmiOption = isOmiEligibleSubject('MI', config.subject);
+      const assessmentItems = [
+        { value: 'Penilaian Harian (PH)', label: 'Penilaian Harian (PH)' },
+        { value: 'STS (Sumatif Tengah Semester)', label: 'STS (Tengah Semester)' },
+        { value: 'SAS (Sumatif Akhir Semester)', label: 'SAS (Akhir Semester)' },
+        { value: 'TKA', label: 'TKA' },
+        ...(showOsnOption ? [{ value: 'OSN', label: '🏆 OSN (Olimpiade)' }] : []),
+        ...(showOmiOption ? [{ value: 'OMI', label: '🕌 OMI (Olimpiade Madrasah)' }] : [])
+      ];
 
       // ============================================================================
       // HALAMAN LOGIN
@@ -1016,91 +1095,209 @@
               </section>
 
               {/* Identitas Soal */}
-              <section className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-4">
+              <section className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-5">
                 <h2 className="text-sm font-bold text-slate-800">Identitas Soal Madrasah Ibtidaiyah (MI)</h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    name="teacherName"
-                    value={config.teacherName}
-                    onChange={handleInputChange}
-                    placeholder="Nama Guru (Opsional)"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                  />
-                  <input
-                    type="text"
-                    name="schoolName"
-                    value={config.schoolName}
-                    onChange={handleInputChange}
-                    placeholder="Nama Madrasah (Opsional)"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                  />
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                      Nama Guru <span className="font-normal normal-case text-slate-400">(Opsional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="teacherName"
+                      value={config.teacherName}
+                      onChange={handleInputChange}
+                      placeholder="Contoh: Ahmad Fauzi, S.Pd.I"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                      Nama Madrasah <span className="font-normal normal-case text-slate-400">(Opsional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="schoolName"
+                      value={config.schoolName}
+                      onChange={handleInputChange}
+                      placeholder="Contoh: MI Miftahul Ulum Wonomerto"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <select name="grade" value={config.grade} onChange={handleInputChange} className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-medium">
-                    <option value="">Pilih Kelas MI (1 – 6)...</option>
-                    {GRADES_BY_LEVEL['MI'].map((grd) => (
-                      <option key={grd} value={grd}>{grd} MI</option>
-                    ))}
-                  </select>
+                {/* Jenjang & Kelas MI */}
+                <div className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                      Jenjang Pendidikan
+                    </label>
+                    <select
+                      name="level"
+                      value="MI"
+                      onChange={handleInputChange}
+                      className="w-full p-3 bg-white border border-emerald-200 rounded-xl text-sm font-extrabold text-emerald-800"
+                    >
+                      <option value="MI">MI (Madrasah Ibtidaiyah)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                      Kelas (Jenjang MI)
+                    </label>
+                    <select name="grade" value={config.grade} onChange={handleInputChange} className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-medium">
+                      <option value="">Pilih Kelas MI (1 – 6)...</option>
+                      {GRADES_BY_LEVEL['MI'].map((grd) => (
+                        <option key={grd} value={grd}>{grd} MI</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-                  <select name="subject" value={config.subject} onChange={handleInputChange} className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-medium">
-                    <option value="">Pilih Mata Pelajaran MI...</option>
-                    {SUBJECTS_BY_LEVEL['MI'].map((sub) => (
-                      <option key={sub} value={sub}>{sub}</option>
-                    ))}
-                  </select>
+                {/* Mata Pelajaran MI */}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                    Mata Pelajaran MI
+                  </label>
+                  {!isManualSubject ? (
+                    <select
+                      name="subject"
+                      value={config.subject}
+                      onChange={(e) => {
+                        if (e.target.value === 'Lainnya') {
+                          setIsManualSubject(true);
+                          setConfig({ ...config, subject: '' });
+                        } else {
+                          handleInputChange(e);
+                        }
+                      }}
+                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-medium"
+                    >
+                      <option value="">Pilih Mata Pelajaran MI...</option>
+                      {SUBJECTS_BY_LEVEL['MI'].map((sub) => (
+                        <option key={sub} value={sub}>{sub}</option>
+                      ))}
+                      <option value="Lainnya" className="font-bold text-emerald-700">
+                        ✍️ Tulis Manual / Muatan Lokal Lainnya...
+                      </option>
+                    </select>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        name="subject"
+                        value={config.subject}
+                        onChange={handleInputChange}
+                        placeholder="Ketik nama mata pelajaran MI..."
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsManualSubject(false);
+                          setConfig({ ...config, subject: '' });
+                        }}
+                        className="px-4 py-2 bg-slate-100 text-slate-600 border border-slate-200 rounded-xl text-sm font-bold"
+                      >
+                        Batal
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Jenis Soal (PH, STS, SAS, TKA, OSN, OMI) */}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                    Jenis Soal <span className="font-normal normal-case text-slate-400">(Opsional)</span>
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    {assessmentItems.map((item) => {
+                      const isSelected = config.assessmentType === item.value;
+                      return (
+                        <button
+                          key={item.value}
+                          type="button"
+                          onClick={() => {
+                            const newType = isSelected ? '' : item.value;
+                            const nextCfg = { ...config, assessmentType: newType };
+                            const autoTopic = buildAutoTopicByAssessment(nextCfg);
+                            if (autoTopic !== null) {
+                              nextCfg.topic = autoTopic;
+                            }
+                            setConfig(nextCfg);
+                          }}
+                          className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                            isSelected
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-500 ring-2 ring-emerald-100'
+                              : 'bg-slate-50/70 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Bahasa Soal */}
-                <div className="grid grid-cols-3 gap-2.5">
-                  {[
-                    { code: 'id', label: '🇮🇩 Bahasa Indonesia' },
-                    { code: 'en', label: '🇬🇧 Bahasa Inggris' },
-                    { code: 'ar', label: '🇸🇦 Bahasa Arab' }
-                  ].map((lang) => (
-                    <button
-                      key={lang.code}
-                      type="button"
-                      onClick={() => setConfig({ ...config, language: lang.code })}
-                      className={`py-2.5 px-3 rounded-xl border text-xs font-bold ${
-                        config.language === lang.code
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-500'
-                          : 'bg-slate-50 text-slate-600 border-slate-200'
-                      }`}
-                    >
-                      {lang.label}
-                    </button>
-                  ))}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                    Bahasa Soal <span className="font-normal normal-case text-slate-400">(Opsional)</span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {[
+                      { code: 'id', label: '🇮🇩 Bahasa Indonesia' },
+                      { code: 'en', label: '🇬🇧 Bahasa Inggris' },
+                      { code: 'ar', label: '🇸🇦 Bahasa Arab' }
+                    ].map((lang) => (
+                      <button
+                        key={lang.code}
+                        type="button"
+                        onClick={() => setConfig({ ...config, language: lang.code })}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold ${
+                          config.language === lang.code
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-500 ring-2 ring-emerald-100'
+                            : 'bg-slate-50 text-slate-600 border-slate-200'
+                        }`}
+                      >
+                        {lang.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <textarea
-                  name="topic"
-                  rows={3}
-                  value={config.topic}
-                  onChange={handleInputChange}
-                  placeholder="Masukkan topik materi MI, rincian bab, atau Capaian Pembelajaran (CP)..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                />
+                {/* Topik / Materi */}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                    Topik / Materi Spesifik / CP
+                  </label>
+                  <textarea
+                    name="topic"
+                    rows={3}
+                    value={config.topic}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan topik materi MI, rincian bab, atau Capaian Pembelajaran (CP)..."
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  />
+                </div>
 
                 {/* Komposisi Soal */}
                 <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-extrabold uppercase text-slate-700">Komposisi Jumlah Soal</span>
+                    <span className="text-xs font-extrabold uppercase text-slate-700">Komposisi &amp; Jumlah Soal</span>
                     <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold">Total: {totalQuestions} Soal</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                     {[
-                      { name: 'pgCount', label: 'PG' },
+                      { name: 'pgCount', label: 'Pilihan Ganda (PG)' },
                       { name: 'pgKompleksCount', label: 'PG Kompleks' },
                       { name: 'menjodohkanCount', label: 'Menjodohkan' },
-                      { name: 'benarSalahCount', label: 'Benar/Salah' },
+                      { name: 'benarSalahCount', label: 'Benar / Salah' },
                       { name: 'isianCount', label: 'Isian Singkat' },
-                      { name: 'uraianCount', label: 'Uraian' }
+                      { name: 'uraianCount', label: 'Uraian / Esai' }
                     ].map((item) => (
-                      <div key={item.name} className="p-2.5 bg-white rounded-xl border flex items-center justify-between">
+                      <div key={item.name} className="p-2.5 bg-white rounded-xl border flex items-center justify-between gap-2">
                         <span className="text-xs font-bold">{item.label}</span>
                         <input
                           type="number"
@@ -1164,7 +1361,9 @@
               <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 sm:p-8 space-y-6">
                 <div className="border-b pb-4">
                   <div className="text-xs font-extrabold text-emerald-700 uppercase">KKMI Kecamatan Wonomerto</div>
-                  <h1 className="text-xl font-extrabold text-slate-900">Naskah Ujian MI &mdash; {config.subject}</h1>
+                  <h1 className="text-xl font-extrabold text-slate-900">
+                    Naskah Ujian MI &mdash; {config.subject}{config.assessmentType ? ` (${config.assessmentType})` : ''}
+                  </h1>
                   <p className="text-xs text-slate-400">Madrasah Ibtidaiyah (MI) &bull; {config.grade} &bull; Kurikulum {config.curriculum}</p>
                 </div>
 
