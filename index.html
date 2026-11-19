@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generate Soal KKMI Wonomerto - Madrasah Ibtidaiyah</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React & ReactDOM CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Babel Standalone untuk kompilasi JSX langsung di browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Lucide Icons (UMD) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // Adapter ikon Lucide agar kompatibel tanpa bundler (Vite/Webpack)
+    const createLucideIcon = (iconName) => {
+      return function LucideIcon({ size = 24, className = '', ...props }) {
+        const spanRef = useRef(null);
+        useEffect(() => {
+          if (spanRef.current && window.lucide && window.lucide.icons[iconName]) {
+            const svgEl = window.lucide.createElement(window.lucide.icons[iconName]);
+            svgEl.setAttribute('width', size);
+            svgEl.setAttribute('height', size);
+            if (className) svgEl.setAttribute('class', className);
+            spanRef.current.innerHTML = '';
+            spanRef.current.appendChild(svgEl);
+          }
+        }, [size, className]);
+        return <span ref={spanRef} className="inline-flex items-center justify-center shrink-0" {...props} />;
+      };
+    };
+
+    const BookOpen = createLucideIcon('BookOpen');
+    const FileText = createLucideIcon('FileText');
+    const Sparkles = createLucideIcon('Sparkles');
+    const CheckCircle2 = createLucideIcon('CheckCircle2');
+    const Download = createLucideIcon('Download');
+    const Copy = createLucideIcon('Copy');
+    const RefreshCw = createLucideIcon('RefreshCw');
+    const ImageIcon = createLucideIcon('Image');
+    const BarChart3 = createLucideIcon('BarChart3');
+    const Network = createLucideIcon('Network');
+    const ChevronDown = createLucideIcon('ChevronDown');
+    const ArrowLeft = createLucideIcon('ArrowLeft');
+    const Loader2 = createLucideIcon('Loader2');
+    const Sliders = createLucideIcon('Sliders');
+    const Layers = createLucideIcon('Layers');
+    const Award = createLucideIcon('Award');
+    const AlertCircle = createLucideIcon('AlertCircle');
+    const Check = createLucideIcon('Check');
+    const Wand2 = createLucideIcon('Wand2');
+    const Printer = createLucideIcon('Printer');
+    const Shuffle = createLucideIcon('Shuffle');
+    const CreditCard = createLucideIcon('CreditCard');
+    const FileCode = createLucideIcon('FileCode');
+    const ExternalLink = createLucideIcon('ExternalLink');
+    const X = createLucideIcon('X');
+    const Edit3 = createLucideIcon('Edit3');
+    const Upload = createLucideIcon('Upload');
+    const Lock = createLucideIcon('Lock');
+    const User = createLucideIcon('User');
+    const Users = createLucideIcon('Users');
+    const UserPlus = createLucideIcon('UserPlus');
+    const Trash2 = createLucideIcon('Trash2');
+    const LogOut = createLucideIcon('LogOut');
+    const ShieldCheck = createLucideIcon('ShieldCheck');
+    const Eye = createLucideIcon('Eye');
+    const EyeOff = createLucideIcon('EyeOff');
+    const Key = createLucideIcon('Key');
+
+    // ============================================================================
+    // KONFIGURASI JENJANG KHUSUS MADRASAH IBTIDAIYAH (MI) - KKMI WONOMERTO
+    // ============================================================================
+    const GRADES_BY_LEVEL = {
+      'MI': ['Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6']
+    };
+
+    const SUBJECTS_BY_LEVEL = {
+      'MI': [
+        "Al-Qur'an Hadis",
+        'Akidah Akhlak',
+        'Fikih',
+        'Sejarah Kebudayaan Islam (SKI)',
+        'Bahasa Arab',
+        'Pendidikan Pancasila',
+        'Bahasa Indonesia',
+        'Matematika',
+        'IPA',
+        'IPS',
+        'IPAS (Ilmu Pengetahuan Alam dan Sosial)',
+        'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)',
+        'Seni dan Budaya',
+        'Bahasa Inggris',
+        'Bahasa Daerah / Muatan Lokal'
+      ]
+    };
+
+    // ============================================================================
+    // DATA DUMMY AKUN ADMIN & PENGGUNA
+    // ============================================================================
+    const STORAGE_KEY_ACCOUNTS = 'kkmi_wonomerto_dummy_accounts_v1';
+    const STORAGE_KEY_SESSION = 'kkmi_wonomerto_active_session_v1';
+    const STORAGE_KEY_API_KEY = 'kkmi_wonomerto_gemini_apikey_v1';
+
+    const INITIAL_DUMMY_ACCOUNTS = [
+      {
+        id: 'usr-admin-01',
+        fullName: 'Administrator KKMI Wonomerto',
+        madrasah: 'KKMI Kecamatan Wonomerto',
+        username: 'admin',
+        password: 'admin123',
+        role: 'admin',
+        createdAt: '2026-01-01'
+      },
+      {
+        id: 'usr-guru-01',
+        fullName: 'Ahmad Fauzi, S.Pd.I',
+        madrasah: 'MI Miftahul Ulum Wonomerto',
+        username: 'guru1',
+        password: 'guru123',
+        role: 'user',
+        createdAt: '2026-01-02'
+      },
+      {
+        id: 'usr-guru-02',
+        fullName: 'Siti Aminah, S.Pd',
+        madrasah: 'MI Nurul Huda Wonomerto',
+        username: 'guru2',
+        password: 'guru123',
+        role: 'user',
+        createdAt: '2026-01-03'
+      }
+    ];
+
+    const isOsnEligibleSubject = (level, subject) => {
+      if (!level || !subject) return false;
+      const s = String(subject).trim().toLowerCase();
+      if (level === 'MI') {
+        return (
+          s === 'matematika' ||
+          s === 'ipa' ||
+          s === 'ips' ||
+          s === 'ipas (ilmu pengetahuan alam dan sosial)'
+        );
+      }
+      return false;
+    };
+
+    const isOmiEligibleSubject = (level, subject) => {
+      if (!level || !subject) return false;
+      const s = String(subject).trim().toLowerCase();
+      if (level === 'MI') {
+        return (
+          s === 'matematika' ||
+          s === 'ipa' ||
+          s === 'ipas (ilmu pengetahuan alam dan sosial)'
+        );
+      }
+      return false;
+    };
+
+    function App() {
+      // State API Key Gemini (disimpan di localStorage pengguna agar aman di GitHub Public)
+      const [userApiKey, setUserApiKey] = useState(() => {
+        try {
+          return localStorage.getItem(STORAGE_KEY_API_KEY) || '';
+        } catch (e) {
+          return '';
+        }
+      });
+      const [showApiKeyText, setShowApiKeyText] = useState(false);
+
+      useEffect(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY_API_KEY, userApiKey);
+        } catch (e) {}
+      }, [userApiKey]);
+
+      const [accounts, setAccounts] = useState(() => {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch (e) {}
+        return INITIAL_DUMMY_ACCOUNTS;
+      });
+
+      const [currentUser, setCurrentUser] = useState(() => {
+        try {
+          const savedSession = localStorage.getItem(STORAGE_KEY_SESSION);
+          if (savedSession) {
+            const parsed = JSON.parse(savedSession);
+            if (parsed && parsed.username) return parsed;
+          }
+        } catch (e) {}
+        return null;
+      });
+
+      const [loginUsername, setLoginUsername] = useState('');
+      const [loginPassword, setLoginPassword] = useState('');
+      const [showLoginPassword, setShowLoginPassword] = useState(false);
+      const [loginError, setLoginError] = useState('');
+
+      const [showUserManagementModal, setShowUserManagementModal] = useState(false);
+      const [editingAccountId, setEditingAccountId] = useState(null);
+      const [accountForm, setAccountForm] = useState({
+        fullName: '',
+        madrasah: '',
+        username: '',
+        password: '',
+        role: 'user'
+      });
+      const [visiblePasswordsMap, setVisiblePasswordsMap] = useState({});
+      const [confirmDeleteAccountId, setConfirmDeleteAccountId] = useState(null);
+
+      useEffect(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(accounts));
+        } catch (e) {}
+      }, [accounts]);
+
+      useEffect(() => {
+        try {
+          if (currentUser) {
+            localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(currentUser));
+          } else {
+            localStorage.removeItem(STORAGE_KEY_SESSION);
+          }
+        } catch (e) {}
+      }, [currentUser]);
+
+      const [config, setConfig] = useState({
+        curriculum: 'Merdeka',
+        teacherName: '',
+        schoolName: '',
+        level: 'MI',
+        grade: '',
+        subject: '',
+        assessmentType: '',
+        language: 'id',
+        topic: '',
+        pgCount: 10,
+        pgKompleksCount: 0,
+        menjodohkanCount: 0,
+        benarSalahCount: 0,
+        isianCount: 0,
+        uraianCount: 0,
+        optionCount: '4',
+        optionLayout: 'vertical',
+        matchingOptionCount: '5',
+        matchingDistractorCount: '0',
+        multiStimulusEnabled: false,
+        multiStimulusType: 'narasi',
+        multiStimulusCount: 1,
+        questionsPerStimulus: 3,
+        taxonomyType: 'bloom',
+        difficultyProfile: 'standard',
+        customBloomCounts: { C1: 2, C2: 2, C3: 2, C4: 2, C5: 1, C6: 1 },
+        customSoloCounts: { Unistructural: 3, Multistructural: 3, Relational: 2, ExtendedAbstract: 2 },
+        aiIllustrationCount: 0,
+        chartCount: 0,
+        conceptMapCount: 0
+      });
+
+      const [isManualSubject, setIsManualSubject] = useState(false);
+      const [inputMode, setInputMode] = useState('text');
+      const [loading, setLoading] = useState(false);
+      const [generationSuccess, setGenerationSuccess] = useState(false);
+      const [progress, setProgress] = useState(0);
+      const [finalQuiz, setFinalQuiz] = useState(null);
+      const [activeTab, setActiveTab] = useState('naskah');
+      const [toast, setToast] = useState(null);
+      const [showExportMenu, setShowExportMenu] = useState(false);
+      const [generatedImages, setGeneratedImages] = useState({});
+      const [generatingImage, setGeneratingImage] = useState({});
+      const [isGeneratingAllImages, setIsGeneratingAllImages] = useState(false);
+      const [customImagePrompts, setCustomImagePrompts] = useState({});
+      const [openImagePromptEditors, setOpenImagePromptEditors] = useState({});
+      const [stimulusByQuestion, setStimulusByQuestion] = useState({});
+      const [openStimulusEditors, setOpenStimulusEditors] = useState({});
+      const [generatingStimulus, setGeneratingStimulus] = useState({});
+      const [regeneratingQuestion, setRegeneratingQuestion] = useState({});
+      const [regeneratingMultiStimulus, setRegeneratingMultiStimulus] = useState({});
+      const [googleFormScriptModal, setGoogleFormScriptModal] = useState(null);
+      const [showWordExportModal, setShowWordExportModal] = useState(false);
+      const [wordExportSelections, setWordExportSelections] = useState({
+        naskah: true,
+        kunci: true,
+        kisikisi: true,
+        analisisbutir: true,
+        kartusoal: true
+      });
+
+      const exportMenuRef = useRef(null);
+      const jsonImportInputRef = useRef(null);
+      const progressInterval = useRef(null);
+
+      useEffect(() => {
+        const handleClickOutside = (e) => {
+          if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
+            setShowExportMenu(false);
+          }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }, []);
+
+      const showToast = (message, type = 'info') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 4000);
+      };
+
+      const handleLoginSubmit = (e) => {
+        e.preventDefault();
+        const uname = String(loginUsername || '').trim().toLowerCase();
+        const pwd = String(loginPassword || '').trim();
+
+        if (!uname || !pwd) {
+          setLoginError('Masukkan username dan password terlebih dahulu.');
+          return;
+        }
+
+        const found = accounts.find(
+          (acc) =>
+            String(acc.username || '').trim().toLowerCase() === uname &&
+            String(acc.password || '').trim() === pwd
+        );
+
+        if (!found) {
+          setLoginError('Username atau password salah. Silakan periksa kembali.');
+          return;
+        }
+
+        setLoginError('');
+        setCurrentUser(found);
+        setLoginUsername('');
+        setLoginPassword('');
+
+        setConfig((prev) => ({
+          ...prev,
+          level: 'MI',
+          teacherName: prev.teacherName || (found.role === 'user' ? found.fullName : prev.teacherName),
+          schoolName: prev.schoolName || (found.madrasah && found.madrasah !== 'KKMI Kecamatan Wonomerto' ? found.madrasah : prev.schoolName)
+        }));
+
+        showToast(`Selamat datang, ${found.fullName}!`, 'success');
+      };
+
+      const handleLogout = () => {
+        setCurrentUser(null);
+        setShowUserManagementModal(false);
+        setConfirmDeleteAccountId(null);
+        setFinalQuiz(null);
+        showToast('Anda telah keluar dari sistem.', 'info');
+      };
+
+      const resetAccountForm = () => {
+        setEditingAccountId(null);
+        setAccountForm({
+          fullName: '',
+          madrasah: '',
+          username: '',
+          password: '',
+          role: 'user'
+        });
+      };
+
+      const handleSaveAccount = (e) => {
+        e.preventDefault();
+        const fullName = String(accountForm.fullName || '').trim();
+        const madrasah = String(accountForm.madrasah || '').trim();
+        const username = String(accountForm.username || '').trim().toLowerCase().replace(/\s+/g, '');
+        const password = String(accountForm.password || '').trim();
+        const role = accountForm.role === 'admin' ? 'admin' : 'user';
+
+        if (!fullName || !username || !password) {
+          showToast('Nama Lengkap, Username, dan Password wajib diisi.', 'error');
+          return;
+        }
+
+        const isDuplicate = accounts.some(
+          (acc) =>
+            String(acc.username || '').trim().toLowerCase() === username &&
+            acc.id !== editingAccountId
+        );
+        if (isDuplicate) {
+          showToast(`Username "${username}" sudah digunakan akun lain.`, 'error');
+          return;
+        }
+
+        if (editingAccountId) {
+          setAccounts((prev) =>
+            prev.map((acc) =>
+              acc.id === editingAccountId
+                ? { ...acc, fullName, madrasah, username, password, role }
+                : acc
+            )
+          );
+          if (currentUser && currentUser.id === editingAccountId) {
+            setCurrentUser((prev) => ({ ...prev, fullName, madrasah, username, password, role }));
+          }
+          showToast(`Akun "${username}" berhasil diperbarui!`, 'success');
+        } else {
+          const newAcc = {
+            id: `usr-${Date.now()}`,
+            fullName,
+            madrasah: madrasah || 'MI Kecamatan Wonomerto',
+            username,
+            password,
+            role,
+            createdAt: new Date().toISOString().slice(0, 10)
+          };
+          setAccounts((prev) => [...prev, newAcc]);
+          showToast(`Akun baru "${username}" berhasil ditambahkan!`, 'success');
+        }
+
+        resetAccountForm();
+      };
+
+      const handleStartEditAccount = (acc) => {
+        setEditingAccountId(acc.id);
+        setAccountForm({
+          fullName: acc.fullName || '',
+          madrasah: acc.madrasah || '',
+          username: acc.username || '',
+          password: acc.password || '',
+          role: acc.role || 'user'
+        });
+      };
+
+      const handleDeleteAccount = (accId) => {
+        if (currentUser && currentUser.id === accId) {
+          showToast('Tidak dapat menghapus akun yang sedang digunakan login saat ini.', 'error');
+          setConfirmDeleteAccountId(null);
+          return;
+        }
+        const target = accounts.find((a) => a.id === accId);
+        setAccounts((prev) => prev.filter((a) => a.id !== accId));
+        if (editingAccountId === accId) {
+          resetAccountForm();
+        }
+        setConfirmDeleteAccountId(null);
+        showToast(`Akun "${target?.username || ''}" berhasil dihapus.`, 'success');
+      };
+
+      // ============================================================================
+      // HELPER DETEKSI BAHASA & FORMATTER MATEMATIKA / SOAL
+      // ============================================================================
+      const isArabicActive = (cfg = config) => (cfg || config)?.language === 'ar';
+      const isEnglishActive = (cfg = config) => {
+        const c = cfg || config;
+        if (isArabicActive(c)) return false;
+        return (
+          c?.language === 'en' ||
+          (c?.language !== 'id' && /bahasa inggris|english/i.test(String(c?.subject || '')))
+        );
+      };
+
+      const getOptionLabel = (idx, useArabic = false) => {
+        if (useArabic) {
+          const arLetters = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ي'];
+          return arLetters[idx] || String.fromCharCode(65 + idx);
+        }
+        return String.fromCharCode(65 + idx);
+      };
+
+      const cleanMatchingItemText = (text = '', isPremise = true) => {
+        if (!text) return '';
+        let s = String(text).trim();
+        if (isPremise) {
+          for (let i = 0; i < 3; i++) {
+            const next = s.replace(/^\s*(?:\(\d+\)|\(\s*[٠-٩]+\s*\)|\d+[\.\)\-:]\s+|[٠-٩]+[\.\)\-:]\s+)/, '').trim();
+            if (next === s) break;
+            s = next;
+          }
+        } else {
+          for (let i = 0; i < 3; i++) {
+            const next = s
+              .replace(/^\s*(?:\([A-Ja-j]\)|[A-Ja-j][\.\)\-:]\s+|\(?[أبجدهوزحطي][\.\)\-:]\s*)/, '')
+              .trim();
+            if (next === s) break;
+            s = next;
+          }
+        }
+        return s;
+      };
+
+      const translateSubjectToEn = (subj = '') => {
+        const map = {
+          'Matematika': 'Mathematics',
+          'Bahasa Indonesia': 'Indonesian Language',
+          'Bahasa Inggris': 'English',
+          'IPA': 'Natural Sciences (IPA)',
+          'IPS': 'Social Studies (IPS)',
+          'IPAS (Ilmu Pengetahuan Alam dan Sosial)': 'Natural & Social Sciences (IPAS)',
+          'Pendidikan Pancasila': 'Pancasila Education'
+        };
+        return map[String(subj || '').trim()] || subj;
+      };
+
+      const translateSubjectToAr = (subj = '') => {
+        const map = {
+          'Bahasa Arab': 'اللُّغَةُ العَرَبِيَّةُ',
+          "Al-Qur'an Hadis": 'القُرْآنُ وَالحَدِيْثُ',
+          'Akidah Akhlak': 'العَقِيْدَةُ وَالأَخْلَاقُ',
+          'Fikih': 'الفِقْهُ',
+          'Sejarah Kebudayaan Islam (SKI)': 'تَارِيْخُ الثَّقَافَةِ الإِسْلَامِيَّةِ',
+          'Matematika': 'الرِّيَاضِيَّاتُ',
+          'IPA': 'العُلُوْمُ الطَّبِيْعِيَّةُ',
+          'IPS': 'العُلُوْمُ الاجْتِمَاعِيَّةُ',
+          'IPAS (Ilmu Pengetahuan Alam dan Sosial)': 'العُلُوْمُ الطَّبِيْعِيَّةُ وَالاجْتِمَاعِيَّةُ'
+        };
+        return map[String(subj || '').trim()] || subj;
+      };
+
+      const translateAssessmentToEn = (assess = '') => {
+        const a = String(assess || '').trim();
+        if (a.includes('Penilaian Harian')) return 'Daily Assessment (PH)';
+        if (a.includes('STS')) return 'Mid-Semester Summative Assessment (STS)';
+        if (a.includes('SAS')) return 'Final Semester Summative Assessment (SAS)';
+        if (a === 'TKA') return 'Academic Ability Test (TKA)';
+        if (a === 'OSN') return 'National Science Olympiad (OSN)';
+        if (a === 'OMI') return 'Indonesian Madrasah Olympiad (OMI)';
+        return a;
+      };
+
+      const translateAssessmentToAr = (assess = '') => {
+        const a = String(assess || '').trim();
+        if (a.includes('Penilaian Harian')) return 'التَّقْيِيْمُ اليَوْمِيُّ';
+        if (a.includes('STS')) return 'اخْتِبَارُ مُنْتَصَفِ الفَصْلِ الدِّرَاسِيِّ';
+        if (a.includes('SAS')) return 'اخْتِبَارُ نِهَايَةِ الفَصْلِ الدِّرَاسِيِّ';
+        if (a === 'TKA') return 'اخْتِبَارُ القُدُرَاتِ الأَكَادِيْمِيَّةِ';
+        if (a === 'OSN') return 'أُولِمْبِيَادُ العُلُوْمِ الوَطَنِيُّ';
+        if (a === 'OMI') return 'أُولِمْبِيَادُ المَدَارِسِ الإِسْلَامِيَّةِ';
+        return a;
+      };
+
+      const translateGradeToEn = (grd = '') => String(grd || '').replace(/^Kelas\s+/i, 'Grade ');
+
+      const translateBentukSoalToEn = (bentuk = '') => {
+        const b = String(bentuk || '').toLowerCase();
+        if (b.includes('kompleks')) return 'Complex Multiple Choice';
+        if (b.includes('jodoh')) return 'Matching';
+        if (b.includes('benar') || b.includes('salah') || b.includes('true')) return 'True / False';
+        if (b.includes('isian') || b.includes('singkat')) return 'Short Answer';
+        if (b.includes('uraian') || b.includes('esai')) return 'Essay';
+        return 'Multiple Choice';
+      };
+
+      const translateBentukSoalToAr = (bentuk = '') => {
+        const b = String(bentuk || '').toLowerCase();
+        if (b.includes('kompleks')) return 'اخْتِيَارٌ مُتَعَدِّدٌ مُرَكَّبٌ';
+        if (b.includes('jodoh')) return 'المُطَابَقَةُ وَالتَّوْصِيْلُ';
+        if (b.includes('benar') || b.includes('salah')) return 'الصَّوَابُ وَالخَطَأُ';
+        if (b.includes('isian') || b.includes('singkat')) return 'إِجَابَةٌ قَصِيْرَةٌ';
+        if (b.includes('uraian') || b.includes('esai')) return 'سُؤَالٌ مَقَالِيٌّ';
+        return 'اخْتِيَارٌ مِنْ مُتَعَدِّدٍ';
+      };
+
+      const sanitizeRawJsonMath = (jsonStr = '') => {
+        if (!jsonStr) return '';
+        return String(jsonStr).replace(
+          /\\+(frac|dfrac|tfrac|sqrt|lim|int|sum|prod|vec|hat|bar|overline|underline|sin|cos|tan|log|ln|times|div|pm|cdot|leq|geq|neq|approx|infty|degree|circ|pi|theta|alpha|beta|gamma|delta|Delta|Omega|rightarrow|to|leftarrow|leftrightarrow|rightleftharpoons|Rightarrow|Leftrightarrow|binom|text|mathrm)(?![a-zA-Z])/g,
+          '\\\\$1'
+        );
+      };
+
+      const extractBalancedBraceGroup = (str, openBraceIdx) => {
+        if (!str || str[openBraceIdx] !== '{') return null;
+        let depth = 0;
+        for (let i = openBraceIdx; i < str.length; i++) {
+          if (str[i] === '{') depth++;
+          else if (str[i] === '}') {
+            depth--;
+            if (depth === 0) return { content: str.slice(openBraceIdx + 1, i), endIndex: i + 1 };
+          }
+        }
+        return null;
+      };
+
+      const convertLatexConstructsToTokens = (inputStr = '') => {
+        let s = String(inputStr || '')
+          .replace(/\\{2,}(?=[a-zA-Z])/g, '\\')
+          .replace(/(?:\\+|\/)+(?:d?frac|tfrac|cfrac|fraq|farc)\b/gi, '\\frac')
+          .replace(/(?:\\+|\/)+sqrt\b/gi, '\\sqrt');
+
+        for (let pass = 0; pass < 8; pass++) {
+          const sqrtRegex = /\\sqrt\s*(?:\[([^\[\]]*)\])?\s*\{/g;
+          const match = sqrtRegex.exec(s);
+          if (!match) break;
+          const grp = extractBalancedBraceGroup(s, match.index + match[0].length - 1);
+          if (!grp) break;
+          s = s.slice(0, match.index) + `⟦SQRT:${grp.content.trim()}::${(match[1] || '').trim()}⟧` + s.slice(grp.endIndex);
+        }
+
+        s = s
+          .replace(/√\s*\{([^{}]+)\}/g, '⟦SQRT:$1::⟧')
+          .replace(/√\s*\(([^()]+)\)/g, '⟦SQRT:$1::⟧')
+          .replace(/√\s*([0-9a-zA-Zπθαβ]+)/g, '⟦SQRT:$1::⟧');
+
+        for (let pass = 0; pass < 10; pass++) {
+          const fracRegex = /\\*\\frac\s*\{/g;
+          const match = fracRegex.exec(s);
+          if (!match) break;
+          const numGrp = extractBalancedBraceGroup(s, match.index + match[0].length - 1);
+          if (!numGrp) break;
+          let afterNumIdx = numGrp.endIndex;
+          while (afterNumIdx < s.length && /\s/.test(s[afterNumIdx])) afterNumIdx++;
+          if (s[afterNumIdx] === '{') {
+            const denGrp = extractBalancedBraceGroup(s, afterNumIdx);
+            if (denGrp) {
+              s = s.slice(0, match.index) + `⟦FRAC:${numGrp.content.trim()}::${denGrp.content.trim()}⟧` + s.slice(denGrp.endIndex);
+              continue;
+            }
+          }
+          break;
+        }
+        return s;
+      };
+
+      const normalizeBrokenMathNotation = (input = '') => {
+        if (input === null || input === undefined) return '';
+        let s = String(input)
+          .replace(/\\r\\n/g, '\n')
+          .replace(/\\n/g, '\n')
+          .replace(/\\\[([\s\S]*?)\\\]/g, '$1')
+          .replace(/\\\(([\s\S]*?)\\\)/g, '$1')
+          .replace(/\$\$([\s\S]*?)\$\$/g, '$1')
+          .replace(/\$([^$\n]+)\$/g, '$1')
+          .replace(/\\(?:text|mathrm|operatorname|mbox)\s*\{([^{}]*)\}/g, '$1');
+
+        s = convertLatexConstructsToTokens(s);
+        s = s
+          .replace(/(?:\\+|\/)times\b/g, '×')
+          .replace(/(?:\\+|\/)div\b/g, '÷')
+          .replace(/(?:\\+|\/)pm\b/g, '±')
+          .replace(/(?:\\+|\/)cdot\b/g, '·')
+          .replace(/(?:\\+|\/)(?:leq|le)\b/g, '≤')
+          .replace(/(?:\\+|\/)(?:geq|ge)\b/g, '≥')
+          .replace(/(?:\\+|\/)(?:neq|ne)\b/g, '≠')
+          .replace(/(?:\\+|\/)approx\b/g, '≈')
+          .replace(/(?:\\+|\/)infty\b/g, '∞')
+          .replace(/(?:\\+|\/)(?:degree|circ)\b/g, '°')
+          .replace(/(?:\\+|\/)pi\b/g, 'π')
+          .replace(/(?:\\+|\/)theta\b/g, 'θ')
+          .replace(/(?:\\+|\/)alpha\b/g, 'α')
+          .replace(/(?:\\+|\/)beta\b/g, 'β')
+          .replace(/(?:\\+|\/)Delta\b/g, 'Δ')
+          .replace(/(?:\\+|\/)(?:rightarrow|to)\b/g, '→')
+          .replace(/\^\s*\{([^{}]+)\}/g, '<sup>$1</sup>')
+          .replace(/\^([+-]?\d+|[a-zA-Z])/g, '<sup>$1</sup>')
+          .replace(/_\s*\{([^{}]+)\}/g, '<sub>$1</sub>')
+          .replace(/([A-Za-z\])])_(\d+|[a-zA-Z])\b/g, '$1<sub>$2</sub>');
+
+        return convertLatexConstructsToTokens(s).trim();
+      };
+
+      const cleanPgkNumbering = (text = '', isOption = false) => {
+        if (!text) return '';
+        let s = String(text)
+          .replace(/\\n/g, '\n')
+          .replace(/[\u2610\u2611\u2612\u25A1\u25A2\u2B1C\u25FB\u25FC]/g, '')
+          .replace(/\(\s*Pilihlah\s+lebih\s+dari\s+satu\s+jawaban\s+yang\s+benar\s*!?\s*\)/gi, '');
+        if (isOption) {
+          s = s.replace(/^\s*(?:[A-Fa-f]|[أبجدهو])\s*[\.\)]\s*/, '');
+        }
+        return s.replace(/\n{3,}/g, '\n\n').trim();
+      };
+
+      const formatMathHtml = (raw = '') => {
+        if (!raw) return '';
+        let out = normalizeBrokenMathNotation(raw);
+        for (let pass = 0; pass < 8; pass++) {
+          let changed = false;
+          out = out.replace(/⟦SQRT:([^⟦⟧]*?)::([^⟦⟧]*?)⟧/g, (_, rad, idx) => {
+            changed = true;
+            const cleanRad = rad.trim();
+            const cleanIdx = idx.trim();
+            return cleanIdx
+              ? `<span class="math-sqrt" data-rad="${encodeURIComponent(cleanRad)}" data-idx="${encodeURIComponent(cleanIdx)}" style="display:inline-flex;align-items:baseline;vertical-align:middle;"><sup style="font-size:0.7em;margin-right:1px;">${cleanIdx}</sup><span>&radic;</span><span style="text-decoration:overline;border-top:1px solid currentColor;padding:0 2px;">${cleanRad}</span></span>`
+              : `<span class="math-sqrt" data-rad="${encodeURIComponent(cleanRad)}" data-idx="" style="display:inline-flex;align-items:baseline;vertical-align:middle;"><span>&radic;</span><span style="text-decoration:overline;border-top:1px solid currentColor;padding:0 2px;">${cleanRad}</span></span>`;
+          });
+          out = out.replace(/⟦FRAC:([^⟦⟧]*?)::([^⟦⟧]*?)⟧/g, (_, num, den) => {
+            changed = true;
+            const cleanNum = num.trim();
+            const cleanDen = den.trim();
+            return `<span class="math-frac" data-num="${encodeURIComponent(cleanNum)}" data-den="${encodeURIComponent(cleanDen)}" style="display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:0.92em;line-height:1.1;margin:0 2px;"><span style="border-bottom:1px solid currentColor;padding:0 3px;">${cleanNum}</span><span style="padding:0 3px;">${cleanDen}</span></span>`;
+          });
+          if (!changed) break;
+        }
+        return out;
+      };
+
+      const wordCompatibleFractions = (html = '') => {
+        if (!html) return '';
+        const container = document.createElement('div');
+        container.innerHTML = String(html);
+        Array.from(container.querySelectorAll('.math-frac')).forEach((el) => {
+          const numRaw = decodeURIComponent(el.getAttribute('data-num') || '');
+          const denRaw = decodeURIComponent(el.getAttribute('data-den') || '');
+          const spanReplacement = document.createElement('span');
+          spanReplacement.innerHTML = `<table style="display:inline-table;vertical-align:middle;border-collapse:collapse;margin:0 2pt;font-family:'Times New Roman',serif;font-size:10pt;line-height:1;"><tr><td style="border-bottom:1pt solid #000;text-align:center;padding:0 2pt 1pt 2pt;">${numRaw}</td></tr><tr><td style="text-align:center;padding:1pt 2pt 0 2pt;">${denRaw}</td></tr></table>`;
+          el.replaceWith(spanReplacement);
+        });
+        return container.innerHTML;
+      };
+
+      const formatMatchingAnswerKey = (rawAnswer = '', premises = []) => {
+        const str = String(rawAnswer || '').trim();
+        const pairs = [...str.matchAll(/(\d+)\s*[-:=–—>]\s*([A-Za-zأبجدهوزحطي])/g)];
+        if (pairs.length > 0) return pairs.map((m) => `${m[1]}-${m[2].toUpperCase()}`).join(', ');
+        if (str) return str;
+        if (Array.isArray(premises) && premises.length > 0) {
+          return premises.map((_, i) => `${i + 1}-${String.fromCharCode(65 + i)}`).join(', ');
+        }
+        return '-';
+      };
+
+      const isMultipleChoice = (q) => {
+        const b = String(q?.bentukSoal || '').toLowerCase();
+        return b === 'pg' || b === 'pilihan ganda' || b === 'multiple choice';
+      };
+
+      const resolveCorrectOptionIndex = (q) => {
+        if (!q || !Array.isArray(q.options) || q.options.length === 0) return 0;
+        const ans = String(q.answer || '').trim();
+        const letterMatch = ans.match(/^\s*([A-Ea-eأبجده])\b/);
+        if (letterMatch) {
+          const ch = letterMatch[1].toUpperCase();
+          const arIdx = ['أ', 'ب', 'ج', 'د', 'ه'].indexOf(ch);
+          if (arIdx !== -1 && arIdx < q.options.length) return arIdx;
+          const idx = ch.charCodeAt(0) - 65;
+          if (idx >= 0 && idx < q.options.length) return idx;
+        }
+        return 0;
+      };
+
+      const balanceMultipleChoiceAnswers = (questions = []) => {
+        const useAr = isArabicActive();
+        return questions.map((q, idx) => {
+          if (!isMultipleChoice(q) || !Array.isArray(q.options) || q.options.length < 2) return q;
+          const currentCorrectIdx = resolveCorrectOptionIndex(q);
+          const targetIdx = idx % q.options.length;
+          const newOpts = [...q.options];
+          if (currentCorrectIdx !== targetIdx && currentCorrectIdx < newOpts.length) {
+            const temp = newOpts[targetIdx];
+            newOpts[targetIdx] = newOpts[currentCorrectIdx];
+            newOpts[currentCorrectIdx] = temp;
+          }
+          const correctLabel = getOptionLabel(targetIdx, useAr);
+          return {
+            ...q,
+            options: newOpts,
+            answer: `${correctLabel}. ${newOpts[targetIdx]}`
+          };
+        });
+      };
+
+      const handleShuffleMultipleChoiceOptions = () => {
+        if (!finalQuiz || !Array.isArray(finalQuiz.questions)) return;
+        const useAr = isArabicActive();
+        const shuffledQuestions = finalQuiz.questions.map((q) => {
+          if (!isMultipleChoice(q) || !Array.isArray(q.options) || q.options.length < 2) return q;
+          const currentIdx = resolveCorrectOptionIndex(q);
+          const pairs = q.options.map((opt, i) => ({ opt, isCorrect: i === currentIdx }));
+          for (let i = pairs.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+          }
+          const newCorrectIdx = Math.max(0, pairs.findIndex((p) => p.isCorrect));
+          const newOpts = pairs.map((p) => p.opt);
+          const label = getOptionLabel(newCorrectIdx, useAr);
+          return { ...q, options: newOpts, answer: `${label}. ${newOpts[newCorrectIdx]}` };
+        });
+        setFinalQuiz((prev) => ({ ...prev, questions: shuffledQuestions }));
+        showToast('Urutan pilihan jawaban PG berhasil diacak!', 'success');
+      };
+
+      const getTotalQuestions = (cfg = config) =>
+        (parseInt(cfg.pgCount, 10) || 0) +
+        (parseInt(cfg.pgKompleksCount, 10) || 0) +
+        (parseInt(cfg.menjodohkanCount, 10) || 0) +
+        (parseInt(cfg.benarSalahCount, 10) || 0) +
+        (parseInt(cfg.isianCount, 10) || 0) +
+        (parseInt(cfg.uraianCount, 10) || 0);
+
+      const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        const countFields = [
+          'pgCount', 'pgKompleksCount', 'menjodohkanCount',
+          'benarSalahCount', 'isianCount', 'uraianCount',
+          'aiIllustrationCount', 'chartCount', 'conceptMapCount'
+        ];
+        if (countFields.includes(name)) {
+          const numVal = value === '' ? '' : Math.max(0, parseInt(value, 10) || 0);
+          setConfig((prev) => ({ ...prev, [name]: numVal }));
+          return;
+        }
+        setConfig((prev) => ({ ...prev, level: 'MI', [name]: value }));
+      };
+
+      // ============================================================================
+      // PEMANGGILAN GEMINI API
+      // ============================================================================
+      const parseAndRecoverQuizJson = (rawText) => {
+        if (!rawText) return null;
+        let cleaned = String(rawText).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace === -1 || lastBrace === -1) return null;
+        try {
+          return JSON.parse(sanitizeRawJsonMath(cleaned.slice(firstBrace, lastBrace + 1)));
+        } catch (e) {
+          return null;
+        }
+      };
+
+      const callGeminiContentApi = async (payload) => {
+        if (!userApiKey.trim()) {
+          throw new Error('Masukkan API Key Google Gemini Anda terlebih dahulu pada kolom di atas!');
+        }
+        const modelName = 'gemini-2.5-flash';
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(userApiKey.trim())}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }
+        );
+        if (!res.ok) {
+          const errTxt = await res.text().catch(() => '');
+          throw new Error(`HTTP ${res.status}: ${errTxt.slice(0, 150)}`);
+        }
+        return await res.json();
+      };
+
+      const handleGenerateQuiz = async () => {
+        if (!userApiKey.trim()) {
+          showToast('Mohon isi API Key Google Gemini terlebih dahulu.', 'error');
+          return;
+        }
+        if (!config.grade || !config.subject) {
+          showToast('Mohon pilih Kelas MI dan Mata Pelajaran terlebih dahulu.', 'error');
+          return;
+        }
+        if (!config.topic.trim()) {
+          showToast('Mohon isi Topik / Materi Spesifik terlebih dahulu.', 'error');
+          return;
+        }
+        const totalQuestions = getTotalQuestions();
+        if (totalQuestions <= 0) {
+          showToast('Total soal minimal 1 butir.', 'error');
+          return;
+        }
+
+        setLoading(true);
+        setGenerationSuccess(false);
+        setProgress(15);
+
+        if (progressInterval.current) clearInterval(progressInterval.current);
+        progressInterval.current = setInterval(() => {
+          setProgress((prev) => (prev < 88 ? prev + 5 : prev));
+        }, 600);
+
+        try {
+          const prompt = `Anda adalah pakar penyusun soal ujian Madrasah Ibtidaiyah (MI) di Indonesia (KKMI Kecamatan Wonomerto).
+Buat naskah soal ujian lengkap sebanyak ${totalQuestions} butir dengan rincian:
+- Kurikulum: ${config.curriculum}
+- Jenjang / Kelas: Madrasah Ibtidaiyah (MI) - ${config.grade}
+- Mata Pelajaran: ${config.subject}
+- Jenis Asesmen: ${config.assessmentType || 'Asesmen Harian'}
+- Bahasa Soal: ${config.language === 'ar' ? 'Bahasa Arab Berharakat Lengkap' : config.language === 'en' ? 'Bahasa Inggris' : 'Bahasa Indonesia'}
+- Materi / Topik: ${config.topic}
+- Rincian Jumlah Bentuk Soal: PG=${config.pgCount}, PG Kompleks=${config.pgKompleksCount}, Menjodohkan=${config.menjodohkanCount}, Benar/Salah=${config.benarSalahCount}, Isian Singkat=${config.isianCount}, Uraian=${config.uraianCount}.
+- Jumlah opsi pilihan: ${config.optionCount} opsi (tanpa awalan huruf A., B., C., D.).
+
+Keluarkan HANYA JSON valid dengan struktur:
+{
+  "title": "Naskah Ujian MI",
+  "questions": [
+    {
+      "bentukSoal": "PG | PG Kompleks | Menjodohkan | Benar/Salah | Isian Singkat | Uraian",
+      "question": "Teks pertanyaan...",
+      "matchingPremises": [],
+      "options": ["Opsi 1", "Opsi 2", "Opsi 3", "Opsi 4"],
+      "answer": "Jawaban benar",
+      "explanation": "Pembahasan lengkap...",
+      "bloomLevel": "C2/C3/C4",
+      "cp": "Capaian Pembelajaran MI",
+      "tp": "Tujuan Pembelajaran MI",
+      "materi": "${config.topic}",
+      "indicator": "Disajikan ..., peserta didik dapat ...",
+      "visualType": "none",
+      "visualDescription": "-"
+    }
+  ]
+}`;
+
+          const rawResponse = await callGeminiContentApi({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.6,
+              responseMimeType: 'application/json'
+            }
+          });
+
+          const rawText = rawResponse?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
+          const parsed = parseAndRecoverQuizJson(rawText);
+
+          if (!parsed || !Array.isArray(parsed.questions) || parsed.questions.length === 0) {
+            throw new Error('Format respons AI tidak terbaca. Silakan klik Buat Soal kembali.');
+          }
+
+          const balancedQuestions = balanceMultipleChoiceAnswers(parsed.questions);
+
+          if (progressInterval.current) clearInterval(progressInterval.current);
+          setProgress(100);
+          setFinalQuiz({ title: parsed.title || 'Naskah Ujian MI', questions: balancedQuestions });
+          setGenerationSuccess(true);
+        } catch (error) {
+          if (progressInterval.current) clearInterval(progressInterval.current);
+          setLoading(false);
+          setGenerationSuccess(false);
+          showToast(`Gagal membuat soal: ${error.message}`, 'error');
+        }
+      };
+
+      const copyRichHtmlToClipboard = async (htmlContent, successMsg) => {
+        try {
+          const fullHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:'Times New Roman',serif;font-size:11pt;color:#000;">${htmlContent}</body></html>`;
+          if (navigator.clipboard && window.ClipboardItem) {
+            const blobHtml = new Blob([fullHtml], { type: 'text/html' });
+            const blobText = new Blob([htmlContent.replace(/<[^>]+>/g, ' ')], { type: 'text/plain' });
+            await navigator.clipboard.write([
+              new window.ClipboardItem({ 'text/html': blobHtml, 'text/plain': blobText })
+            ]);
+            showToast(successMsg, 'success');
+            return;
+          }
+        } catch (err) {}
+        showToast(successMsg, 'success');
+      };
+
+      const buildExamPaperHtmlForExport = () => {
+        if (!finalQuiz) return '';
+        let html = `<div style="text-align:center;font-family:'Times New Roman',serif;margin-bottom:16px;">
+          <div style="font-size:12pt;font-weight:bold;">KKMI KECAMATAN WONOMERTO</div>
+          ${config.schoolName ? `<div style="font-size:14pt;font-weight:bold;">${config.schoolName.toUpperCase()}</div>` : ''}
+          <div style="font-size:13pt;font-weight:bold;">NASKAH UJIAN ${String(config.subject || '').toUpperCase()}</div>
+          <div style="font-size:11pt;">Jenjang: Madrasah Ibtidaiyah (MI) &bull; Kelas: ${config.grade} &bull; Kurikulum: ${config.curriculum}</div>
+        </div><hr/>`;
+
+        finalQuiz.questions.forEach((q, idx) => {
+          html += `<p><b>${idx + 1}.</b> ${wordCompatibleFractions(formatMathHtml(q.question || ''))}</p>`;
+          if (Array.isArray(q.options) && q.options.length > 0) {
+            q.options.forEach((opt, oIdx) => {
+              html += `<p style="margin-left:18pt;"><b>${String.fromCharCode(65 + oIdx)}.</b> ${wordCompatibleFractions(formatMathHtml(opt))}</p>`;
+            });
+          }
+        });
+        return html;
+      };
+
+      const handleDownloadWordSimple = () => {
+        if (!finalQuiz) return;
+        const htmlDoc = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:'Times New Roman',serif;">${buildExamPaperHtmlForExport()}</body></html>`;
+        const blob = new Blob(['\ufeff', htmlDoc], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Soal_MI_KKMI_Wonomerto_${(config.subject || 'Ujian').replace(/\s+/g, '_')}.doc`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Dokumen Word berhasil diunduh!', 'success');
+      };
+
+      const handleExportQuizJson = () => {
+        if (!finalQuiz) return;
+        const blob = new Blob([JSON.stringify({ config, finalQuiz }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `KKMI_Wonomerto_${(config.subject || 'Soal').replace(/\s+/g, '_')}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('File JSON berhasil diunduh!', 'success');
+      };
+
+      const handleImportQuizJsonFile = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const parsed = JSON.parse(await file.text());
+          if (parsed?.config) setConfig((prev) => ({ ...prev, ...parsed.config, level: 'MI' }));
+          if (parsed?.finalQuiz?.questions) {
+            setFinalQuiz(parsed.finalQuiz);
+            setActiveTab('naskah');
+            showToast('File JSON berhasil dimuat!', 'success');
+          }
+        } catch (err) {
+          showToast('File JSON tidak valid.', 'error');
+        }
+      };
+
+      const totalQuestions = getTotalQuestions();
+
+      // ============================================================================
+      // HALAMAN LOGIN
+      // ============================================================================
+      if (!currentUser) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-teal-900 to-slate-900 flex flex-col justify-center items-center p-4">
+            {toast && (
+              <div className="fixed bottom-5 right-5 z-50 bg-slate-800 text-white px-4 py-3 rounded-2xl shadow-xl text-sm font-semibold">
+                {toast.message}
+              </div>
+            )}
+
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-emerald-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-7 text-center text-white space-y-2">
+                <div className="w-14 h-14 rounded-2xl bg-white/20 mx-auto flex items-center justify-center shadow-lg border border-white/30">
+                  <BookOpen size={28} className="text-white" />
+                </div>
+                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+                  Generate Soal KKMI Wonomerto
+                </h1>
+                <p className="text-xs text-emerald-100 font-medium">
+                  Sistem Penyusunan Asesmen &amp; Bank Soal Madrasah Ibtidaiyah (MI)
+                </p>
+              </div>
+
+              <form onSubmit={handleLoginSubmit} className="p-6 sm:p-8 space-y-5">
+                {loginError && (
+                  <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs font-bold text-red-700">
+                    <AlertCircle size={16} />
+                    <span>{loginError}</span>
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">Username</label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"><User size={16} /></span>
+                    <input
+                      type="text"
+                      value={loginUsername}
+                      onChange={(e) => setLoginUsername(e.target.value)}
+                      placeholder="Masukkan username (admin / guru1)..."
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">Password</label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"><Lock size={16} /></span>
+                    <input
+                      type={showLoginPassword ? 'text' : 'password'}
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="Masukkan password..."
+                      className="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
+                    >
+                      {showLoginPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-sm shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  <ShieldCheck size={18} />
+                  <span>Masuk ke Aplikasi</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        );
+      }
+
+      // ============================================================================
+      // HALAMAN UTAMA APLIKASI
+      // ============================================================================
+      return (
+        <div className="min-h-screen bg-[#F8FAFC] text-slate-800">
+          <input ref={jsonImportInputRef} type="file" accept=".json" onChange={handleImportQuizJsonFile} className="hidden" />
+
+          {/* Navbar */}
+          <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 py-3 px-4 print:hidden">
+            <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-white shadow-md">
+                  <BookOpen size={20} />
+                </div>
+                <div>
+                  <span className="text-base sm:text-lg font-extrabold tracking-tight text-emerald-700 block leading-none">
+                    Generate Soal KKMI Wonomerto
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Jenjang Madrasah Ibtidaiyah (MI)
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 sm:gap-3">
+                {currentUser.role === 'admin' && (
+                  <button
+                    type="button"
+                    onClick={() => { resetAccountForm(); setShowUserManagementModal(true); }}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-extrabold"
+                  >
+                    <Users size={15} />
+                    <span>Kelola Akun ({accounts.length})</span>
+                  </button>
+                )}
+
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200">
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${currentUser.role === 'admin' ? 'bg-amber-500 text-white' : 'bg-emerald-600 text-white'}`}>
+                    {currentUser.role === 'admin' ? 'Admin' : 'Pengguna'}
+                  </span>
+                  <span className="text-xs font-bold text-slate-700">{currentUser.fullName}</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold"
+                >
+                  <LogOut size={14} />
+                  <span>Keluar</span>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Toast */}
+          {toast && (
+            <div className="fixed bottom-5 right-5 z-50 max-w-md print:hidden">
+              <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-sm font-semibold ${toast.type === 'error' ? 'bg-red-600 text-white border-red-700' : 'bg-emerald-600 text-white border-emerald-700'}`}>
+                <span>{toast.message}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Kelola Akun */}
+          {showUserManagementModal && currentUser.role === 'admin' && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+                <div className="px-6 py-4 bg-emerald-700 text-white flex items-center justify-between">
+                  <h3 className="text-lg font-extrabold">Manajemen Akun Pengguna &amp; Admin</h3>
+                  <button onClick={() => setShowUserManagementModal(false)} className="p-2 text-white/80 hover:text-white"><X size={20} /></button>
+                </div>
+                <div className="p-6 overflow-y-auto space-y-6">
+                  <form onSubmit={handleSaveAccount} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input type="text" placeholder="Nama Lengkap *" value={accountForm.fullName} onChange={(e) => setAccountForm({ ...accountForm, fullName: e.target.value })} className="p-2.5 bg-white border rounded-xl text-xs" />
+                    <input type="text" placeholder="Asal Madrasah" value={accountForm.madrasah} onChange={(e) => setAccountForm({ ...accountForm, madrasah: e.target.value })} className="p-2.5 bg-white border rounded-xl text-xs" />
+                    <select value={accountForm.role} onChange={(e) => setAccountForm({ ...accountForm, role: e.target.value })} className="p-2.5 bg-white border rounded-xl text-xs font-bold">
+                      <option value="user">Pengguna / Guru MI</option>
+                      <option value="admin">Administrator KKMI</option>
+                    </select>
+                    <input type="text" placeholder="Username *" value={accountForm.username} onChange={(e) => setAccountForm({ ...accountForm, username: e.target.value })} className="p-2.5 bg-white border rounded-xl text-xs font-mono" />
+                    <input type="text" placeholder="Password *" value={accountForm.password} onChange={(e) => setAccountForm({ ...accountForm, password: e.target.value })} className="p-2.5 bg-white border rounded-xl text-xs font-mono" />
+                    <button type="submit" className="py-2.5 px-4 rounded-xl bg-emerald-600 text-white font-bold text-xs">
+                      {editingAccountId ? 'Simpan Perubahan' : 'Tambah Akun'}
+                    </button>
+                  </form>
+
+                  <table className="w-full text-left border-collapse text-xs border">
+                    <thead>
+                      <tr className="bg-slate-100 font-bold border-b">
+                        <th className="p-3">Nama &amp; Madrasah</th>
+                        <th className="p-3">Username</th>
+                        <th className="p-3">Password</th>
+                        <th className="p-3 text-center">Role</th>
+                        <th className="p-3 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {accounts.map((acc) => (
+                        <tr key={acc.id}>
+                          <td className="p-3"><b>{acc.fullName}</b><br/><span className="text-slate-500">{acc.madrasah}</span></td>
+                          <td className="p-3 font-mono">{acc.username}</td>
+                          <td className="p-3 font-mono">{acc.password}</td>
+                          <td className="p-3 text-center uppercase font-bold">{acc.role}</td>
+                          <td className="p-3 text-center space-x-2">
+                            <button onClick={() => handleStartEditAccount(acc)} className="px-2 py-1 bg-blue-100 text-blue-700 rounded font-bold">Edit</button>
+                            {currentUser.id !== acc.id && (
+                              <button onClick={() => handleDeleteAccount(acc.id)} className="px-2 py-1 bg-red-100 text-red-600 rounded font-bold">Hapus</button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* LOADING SCREEN */}
+          {loading ? (
+            <main className="max-w-2xl mx-auto px-4 py-14">
+              <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 text-center space-y-6">
+                {!generationSuccess ? (
+                  <>
+                    <h2 className="text-2xl font-extrabold text-slate-800">AI Sedang Meracik Soal MI...</h2>
+                    <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
+                    </div>
+                    <p className="text-xs font-bold text-emerald-600">{progress}%</p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-2xl font-extrabold text-slate-800">Soal MI Berhasil Dibuat!</h2>
+                    <button
+                      type="button"
+                      onClick={() => { setLoading(false); setGenerationSuccess(false); }}
+                      className="px-8 py-3.5 rounded-full bg-slate-900 text-white font-bold text-sm"
+                    >
+                      Lihat Hasil Soal
+                    </button>
+                  </>
+                )}
+              </div>
+            </main>
+          ) : !finalQuiz || finalQuiz._minimizedToHome ? (
+            /* FORM KONFIGURASI */
+            <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+              <div className="text-center space-y-2">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+                  Generator Soal MI Otomatis, <span className="text-emerald-600">Lebih Cepat &amp; Praktis</span>
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500">
+                  Susun naskah ujian Madrasah Ibtidaiyah (Kelas 1–6) lengkap dengan kunci jawaban, pembahasan, dan kisi-kisi.
+                </p>
+              </div>
+
+              {/* Pengaturan API Key Gemini */}
+              <section className="bg-amber-50/70 rounded-3xl border border-amber-200 p-5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold text-amber-900 uppercase flex items-center gap-1.5">
+                    <Key size={15} /> Kunci API Google Gemini (Wajib Diisi)
+                  </span>
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-[11px] font-bold text-emerald-700 underline">
+                    Dapatkan API Key Gratis
+                  </a>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showApiKeyText ? 'text' : 'password'}
+                    value={userApiKey}
+                    onChange={(e) => setUserApiKey(e.target.value)}
+                    placeholder="Tempel AIzaSy... API Key Gemini Anda di sini"
+                    className="w-full p-3 pr-10 bg-white border border-amber-300 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKeyText((p) => !p)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  >
+                    {showApiKeyText ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </section>
+
+              {/* Identitas Soal */}
+              <section className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-4">
+                <h2 className="text-sm font-bold text-slate-800">Identitas Soal Madrasah Ibtidaiyah (MI)</h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    name="teacherName"
+                    value={config.teacherName}
+                    onChange={handleInputChange}
+                    placeholder="Nama Guru (Opsional)"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  />
+                  <input
+                    type="text"
+                    name="schoolName"
+                    value={config.schoolName}
+                    onChange={handleInputChange}
+                    placeholder="Nama Madrasah (Opsional)"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <select name="grade" value={config.grade} onChange={handleInputChange} className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-medium">
+                    <option value="">Pilih Kelas MI (1 – 6)...</option>
+                    {GRADES_BY_LEVEL['MI'].map((grd) => (
+                      <option key={grd} value={grd}>{grd} MI</option>
+                    ))}
+                  </select>
+
+                  <select name="subject" value={config.subject} onChange={handleInputChange} className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-medium">
+                    <option value="">Pilih Mata Pelajaran MI...</option>
+                    {SUBJECTS_BY_LEVEL['MI'].map((sub) => (
+                      <option key={sub} value={sub}>{sub}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <textarea
+                  name="topic"
+                  rows={3}
+                  value={config.topic}
+                  onChange={handleInputChange}
+                  placeholder="Masukkan topik materi MI, rincian bab, atau Capaian Pembelajaran (CP)..."
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                />
+
+                {/* Komposisi Soal */}
+                <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-extrabold uppercase text-slate-700">Komposisi Jumlah Soal</span>
+                    <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold">Total: {totalQuestions} Soal</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    {[
+                      { name: 'pgCount', label: 'PG' },
+                      { name: 'pgKompleksCount', label: 'PG Kompleks' },
+                      { name: 'menjodohkanCount', label: 'Menjodohkan' },
+                      { name: 'benarSalahCount', label: 'Benar/Salah' },
+                      { name: 'isianCount', label: 'Isian Singkat' },
+                      { name: 'uraianCount', label: 'Uraian' }
+                    ].map((item) => (
+                      <div key={item.name} className="p-2.5 bg-white rounded-xl border flex items-center justify-between">
+                        <span className="text-xs font-bold">{item.label}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="50"
+                          name={item.name}
+                          value={config[item.name]}
+                          onChange={handleInputChange}
+                          className="w-14 p-1 text-center font-bold text-xs bg-slate-50 border rounded-lg"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+
+              <button
+                type="button"
+                onClick={handleGenerateQuiz}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Sparkles size={18} />
+                <span>Buat Soal MI Sekarang</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => jsonImportInputRef.current?.click()}
+                className="w-full py-3.5 rounded-2xl bg-white text-slate-700 border-2 border-slate-200 font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Upload size={18} />
+                <span>Import Soal dari File JSON (.json)</span>
+              </button>
+            </main>
+          ) : (
+            /* HASIL SOAL */
+            <main className="max-w-4xl mx-auto px-4 py-8 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
+                <button
+                  type="button"
+                  onClick={() => setFinalQuiz((prev) => ({ ...prev, _minimizedToHome: true }))}
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border text-xs font-bold"
+                >
+                  <ArrowLeft size={14} />
+                  <span>Kembali ke Pengaturan</span>
+                </button>
+
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={handleDownloadWordSimple} className="px-3.5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold">
+                    Download Word (.doc)
+                  </button>
+                  <button onClick={() => window.print()} className="px-3.5 py-2 rounded-xl bg-red-600 text-white text-xs font-bold">
+                    Cetak / PDF
+                  </button>
+                  <button onClick={handleExportQuizJson} className="px-3.5 py-2 rounded-xl bg-white border text-xs font-bold">
+                    Export JSON
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 sm:p-8 space-y-6">
+                <div className="border-b pb-4">
+                  <div className="text-xs font-extrabold text-emerald-700 uppercase">KKMI Kecamatan Wonomerto</div>
+                  <h1 className="text-xl font-extrabold text-slate-900">Naskah Ujian MI &mdash; {config.subject}</h1>
+                  <p className="text-xs text-slate-400">Madrasah Ibtidaiyah (MI) &bull; {config.grade} &bull; Kurikulum {config.curriculum}</p>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex gap-6 border-b text-xs sm:text-sm font-bold print:hidden">
+                  {[
+                    { id: 'naskah', label: 'Naskah Soal' },
+                    { id: 'kunci', label: 'Kunci & Pembahasan' },
+                    { id: 'kisikisi', label: 'Kisi-Kisi' }
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setActiveTab(t.id)}
+                      className={`pb-3 border-b-2 ${activeTab === t.id ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-400'}`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+
+                {activeTab === 'naskah' && (
+                  <div className="space-y-6">
+                    <div className="flex justify-end gap-2 print:hidden">
+                      <button onClick={handleShuffleMultipleChoiceOptions} className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+                        Acak Jawaban PG
+                      </button>
+                      <button onClick={() => copyRichHtmlToClipboard(buildExamPaperHtmlForExport(), 'Naskah berhasil disalin!')} className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
+                        Salin Naskah
+                      </button>
+                    </div>
+
+                    {finalQuiz.questions.map((q, idx) => (
+                      <div key={idx} className="flex gap-3">
+                        <span className="font-bold">{idx + 1}.</span>
+                        <div className="space-y-2 w-full">
+                          <div className="text-[11px] font-bold text-slate-400 uppercase">{q.bentukSoal || 'PG'}</div>
+                          <div className="text-sm sm:text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: formatMathHtml(q.question || '') }} />
+                          {Array.isArray(q.options) && q.options.length > 0 && (
+                            <div className="space-y-1.5 pt-1">
+                              {q.options.map((opt, oIdx) => (
+                                <div key={oIdx} className="flex gap-2.5 text-sm">
+                                  <span className="font-bold">{String.fromCharCode(65 + oIdx)}.</span>
+                                  <span dangerouslySetInnerHTML={{ __html: formatMathHtml(opt) }} />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {activeTab === 'kunci' && (
+                  <div className="space-y-4">
+                    {finalQuiz.questions.map((q, idx) => (
+                      <div key={idx} className="p-4 rounded-2xl bg-slate-50 border space-y-1.5">
+                        <div className="text-xs font-extrabold uppercase">Soal No. {idx + 1} ({q.bentukSoal || 'PG'})</div>
+                        <div className="text-sm font-bold text-emerald-700">Kunci Jawaban: <span dangerouslySetInnerHTML={{ __html: formatMathHtml(q.answer || '-') }} /></div>
+                        <div className="text-xs text-slate-600">Pembahasan: <span dangerouslySetInnerHTML={{ __html: formatMathHtml(q.explanation || '-') }} /></div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {activeTab === 'kisikisi' && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs border">
+                      <thead>
+                        <tr className="bg-slate-100 font-bold border-b">
+                          <th className="p-2.5 text-center">No</th>
+                          <th className="p-2.5">CP</th>
+                          <th className="p-2.5">TP</th>
+                          <th className="p-2.5">Materi</th>
+                          <th className="p-2.5">Indikator Soal</th>
+                          <th className="p-2.5 text-center">Level</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {finalQuiz.questions.map((q, idx) => (
+                          <tr key={idx}>
+                            <td className="p-2.5 text-center font-bold">{idx + 1}</td>
+                            <td className="p-2.5">{q.cp || '-'}</td>
+                            <td className="p-2.5">{q.tp || '-'}</td>
+                            <td className="p-2.5">{q.materi || config.topic}</td>
+                            <td className="p-2.5">{q.indicator || '-'}</td>
+                            <td className="p-2.5 text-center font-bold">{q.bloomLevel || 'C3'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </main>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
