@@ -24,7 +24,7 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // Adapter ikon Lucide agar kompatibel tanpa bundler (Vite/Webpack)
+    // Adapter ikon Lucide agar kompatibel tanpa bundler
     const createLucideIcon = (iconName) => {
       return function LucideIcon({ size = 24, className = '', ...props }) {
         const spanRef = useRef(null);
@@ -48,37 +48,18 @@
     const CheckCircle2 = createLucideIcon('CheckCircle2');
     const Download = createLucideIcon('Download');
     const Copy = createLucideIcon('Copy');
-    const RefreshCw = createLucideIcon('RefreshCw');
-    const ImageIcon = createLucideIcon('Image');
-    const BarChart3 = createLucideIcon('BarChart3');
-    const Network = createLucideIcon('Network');
-    const ChevronDown = createLucideIcon('ChevronDown');
     const ArrowLeft = createLucideIcon('ArrowLeft');
-    const Loader2 = createLucideIcon('Loader2');
-    const Sliders = createLucideIcon('Sliders');
     const Layers = createLucideIcon('Layers');
-    const Award = createLucideIcon('Award');
     const AlertCircle = createLucideIcon('AlertCircle');
-    const Check = createLucideIcon('Check');
-    const Wand2 = createLucideIcon('Wand2');
-    const Printer = createLucideIcon('Printer');
-    const Shuffle = createLucideIcon('Shuffle');
-    const CreditCard = createLucideIcon('CreditCard');
-    const FileCode = createLucideIcon('FileCode');
-    const ExternalLink = createLucideIcon('ExternalLink');
-    const X = createLucideIcon('X');
-    const Edit3 = createLucideIcon('Edit3');
     const Upload = createLucideIcon('Upload');
     const Lock = createLucideIcon('Lock');
     const User = createLucideIcon('User');
     const Users = createLucideIcon('Users');
-    const UserPlus = createLucideIcon('UserPlus');
-    const Trash2 = createLucideIcon('Trash2');
     const LogOut = createLucideIcon('LogOut');
     const ShieldCheck = createLucideIcon('ShieldCheck');
     const Eye = createLucideIcon('Eye');
     const EyeOff = createLucideIcon('EyeOff');
-    const Key = createLucideIcon('Key');
+    const X = createLucideIcon('X');
 
     // ============================================================================
     // KONFIGURASI JENJANG KHUSUS MADRASAH IBTIDAIYAH (MI) - KKMI WONOMERTO
@@ -112,7 +93,6 @@
     // ============================================================================
     const STORAGE_KEY_ACCOUNTS = 'kkmi_wonomerto_dummy_accounts_v1';
     const STORAGE_KEY_SESSION = 'kkmi_wonomerto_active_session_v1';
-    const STORAGE_KEY_API_KEY = 'kkmi_wonomerto_gemini_apikey_v1';
 
     const INITIAL_DUMMY_ACCOUNTS = [
       {
@@ -144,50 +124,7 @@
       }
     ];
 
-    const isOsnEligibleSubject = (level, subject) => {
-      if (!level || !subject) return false;
-      const s = String(subject).trim().toLowerCase();
-      if (level === 'MI') {
-        return (
-          s === 'matematika' ||
-          s === 'ipa' ||
-          s === 'ips' ||
-          s === 'ipas (ilmu pengetahuan alam dan sosial)'
-        );
-      }
-      return false;
-    };
-
-    const isOmiEligibleSubject = (level, subject) => {
-      if (!level || !subject) return false;
-      const s = String(subject).trim().toLowerCase();
-      if (level === 'MI') {
-        return (
-          s === 'matematika' ||
-          s === 'ipa' ||
-          s === 'ipas (ilmu pengetahuan alam dan sosial)'
-        );
-      }
-      return false;
-    };
-
     function App() {
-      // State API Key Gemini (disimpan di localStorage pengguna agar aman di GitHub Public)
-      const [userApiKey, setUserApiKey] = useState(() => {
-        try {
-          return localStorage.getItem(STORAGE_KEY_API_KEY) || '';
-        } catch (e) {
-          return '';
-        }
-      });
-      const [showApiKeyText, setShowApiKeyText] = useState(false);
-
-      useEffect(() => {
-        try {
-          localStorage.setItem(STORAGE_KEY_API_KEY, userApiKey);
-        } catch (e) {}
-      }, [userApiKey]);
-
       const [accounts, setAccounts] = useState(() => {
         try {
           const saved = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
@@ -224,8 +161,6 @@
         password: '',
         role: 'user'
       });
-      const [visiblePasswordsMap, setVisiblePasswordsMap] = useState({});
-      const [confirmDeleteAccountId, setConfirmDeleteAccountId] = useState(null);
 
       useEffect(() => {
         try {
@@ -262,62 +197,17 @@
         optionCount: '4',
         optionLayout: 'vertical',
         matchingOptionCount: '5',
-        matchingDistractorCount: '0',
-        multiStimulusEnabled: false,
-        multiStimulusType: 'narasi',
-        multiStimulusCount: 1,
-        questionsPerStimulus: 3,
-        taxonomyType: 'bloom',
-        difficultyProfile: 'standard',
-        customBloomCounts: { C1: 2, C2: 2, C3: 2, C4: 2, C5: 1, C6: 1 },
-        customSoloCounts: { Unistructural: 3, Multistructural: 3, Relational: 2, ExtendedAbstract: 2 },
-        aiIllustrationCount: 0,
-        chartCount: 0,
-        conceptMapCount: 0
+        matchingDistractorCount: '0'
       });
 
-      const [isManualSubject, setIsManualSubject] = useState(false);
-      const [inputMode, setInputMode] = useState('text');
       const [loading, setLoading] = useState(false);
       const [generationSuccess, setGenerationSuccess] = useState(false);
       const [progress, setProgress] = useState(0);
       const [finalQuiz, setFinalQuiz] = useState(null);
       const [activeTab, setActiveTab] = useState('naskah');
       const [toast, setToast] = useState(null);
-      const [showExportMenu, setShowExportMenu] = useState(false);
-      const [generatedImages, setGeneratedImages] = useState({});
-      const [generatingImage, setGeneratingImage] = useState({});
-      const [isGeneratingAllImages, setIsGeneratingAllImages] = useState(false);
-      const [customImagePrompts, setCustomImagePrompts] = useState({});
-      const [openImagePromptEditors, setOpenImagePromptEditors] = useState({});
-      const [stimulusByQuestion, setStimulusByQuestion] = useState({});
-      const [openStimulusEditors, setOpenStimulusEditors] = useState({});
-      const [generatingStimulus, setGeneratingStimulus] = useState({});
-      const [regeneratingQuestion, setRegeneratingQuestion] = useState({});
-      const [regeneratingMultiStimulus, setRegeneratingMultiStimulus] = useState({});
-      const [googleFormScriptModal, setGoogleFormScriptModal] = useState(null);
-      const [showWordExportModal, setShowWordExportModal] = useState(false);
-      const [wordExportSelections, setWordExportSelections] = useState({
-        naskah: true,
-        kunci: true,
-        kisikisi: true,
-        analisisbutir: true,
-        kartusoal: true
-      });
 
-      const exportMenuRef = useRef(null);
       const jsonImportInputRef = useRef(null);
-      const progressInterval = useRef(null);
-
-      useEffect(() => {
-        const handleClickOutside = (e) => {
-          if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
-            setShowExportMenu(false);
-          }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-      }, []);
 
       const showToast = (message, type = 'info') => {
         setToast({ message, type });
@@ -363,7 +253,6 @@
       const handleLogout = () => {
         setCurrentUser(null);
         setShowUserManagementModal(false);
-        setConfirmDeleteAccountId(null);
         setFinalQuiz(null);
         showToast('Anda telah keluar dari sistem.', 'info');
       };
@@ -445,30 +334,19 @@
       const handleDeleteAccount = (accId) => {
         if (currentUser && currentUser.id === accId) {
           showToast('Tidak dapat menghapus akun yang sedang digunakan login saat ini.', 'error');
-          setConfirmDeleteAccountId(null);
           return;
         }
         const target = accounts.find((a) => a.id === accId);
         setAccounts((prev) => prev.filter((a) => a.id !== accId));
-        if (editingAccountId === accId) {
-          resetAccountForm();
-        }
-        setConfirmDeleteAccountId(null);
+        if (editingAccountId === accId) resetAccountForm();
         showToast(`Akun "${target?.username || ''}" berhasil dihapus.`, 'success');
       };
 
       // ============================================================================
-      // HELPER DETEKSI BAHASA & FORMATTER MATEMATIKA / SOAL
+      // GENERATOR SOAL LOKAL TANPA API KEY
       // ============================================================================
       const isArabicActive = (cfg = config) => (cfg || config)?.language === 'ar';
-      const isEnglishActive = (cfg = config) => {
-        const c = cfg || config;
-        if (isArabicActive(c)) return false;
-        return (
-          c?.language === 'en' ||
-          (c?.language !== 'id' && /bahasa inggris|english/i.test(String(c?.subject || '')))
-        );
-      };
+      const isEnglishActive = (cfg = config) => (cfg || config)?.language === 'en';
 
       const getOptionLabel = (idx, useArabic = false) => {
         if (useArabic) {
@@ -478,304 +356,226 @@
         return String.fromCharCode(65 + idx);
       };
 
-      const cleanMatchingItemText = (text = '', isPremise = true) => {
-        if (!text) return '';
-        let s = String(text).trim();
-        if (isPremise) {
-          for (let i = 0; i < 3; i++) {
-            const next = s.replace(/^\s*(?:\(\d+\)|\(\s*[٠-٩]+\s*\)|\d+[\.\)\-:]\s+|[٠-٩]+[\.\)\-:]\s+)/, '').trim();
-            if (next === s) break;
-            s = next;
-          }
-        } else {
-          for (let i = 0; i < 3; i++) {
-            const next = s
-              .replace(/^\s*(?:\([A-Ja-j]\)|[A-Ja-j][\.\)\-:]\s+|\(?[أبجدهوزحطي][\.\)\-:]\s*)/, '')
-              .trim();
-            if (next === s) break;
-            s = next;
-          }
-        }
-        return s;
-      };
+      const buildLocalQuestionItem = (idx, bentukSoal, cfg) => {
+        const subj = cfg.subject || 'Mata Pelajaran MI';
+        const top = cfg.topic || 'Materi Pembelajaran MI';
+        const optCount = parseInt(cfg.optionCount, 10) || 4;
+        const matchCount = parseInt(cfg.matchingOptionCount, 10) || 5;
+        const matchDistractorCount = parseInt(cfg.matchingDistractorCount, 10) || 0;
+        const isMathSci = /matematika|ipa|ipas/i.test(`${subj} ${top}`);
+        const useAr = isArabicActive(cfg);
+        const useEn = isEnglishActive(cfg);
+        const n = idx + 1;
+        const bloomLevels = ['C2', 'C3', 'C4'];
+        const bloomLevel = bloomLevels[idx % bloomLevels.length];
 
-      const translateSubjectToEn = (subj = '') => {
-        const map = {
-          'Matematika': 'Mathematics',
-          'Bahasa Indonesia': 'Indonesian Language',
-          'Bahasa Inggris': 'English',
-          'IPA': 'Natural Sciences (IPA)',
-          'IPS': 'Social Studies (IPS)',
-          'IPAS (Ilmu Pengetahuan Alam dan Sosial)': 'Natural & Social Sciences (IPAS)',
-          'Pendidikan Pancasila': 'Pancasila Education'
-        };
-        return map[String(subj || '').trim()] || subj;
-      };
+        if (bentukSoal === 'PG Kompleks') {
+          const rawOpts = useAr
+            ? [
+                `يَتَوَافَقُ مَعَ القَوَاعِدِ الأَسَاسِيَّةِ فِي مَوْضُوْعِ (${top})`,
+                `يُسَاهِمُ فِي تَحْقِيْقِ الفَهْمِ الصَّحِيْحِ وَالتَّطْبِيْقِ العَمَلِيِّ`,
+                `يَتَعَارَضُ مَعَ الأَحْكَامِ وَالأَدِلَّةِ الوَارِدَةِ فِي الدَّرْسِ`,
+                `يَعْكِسُ القِيَمَ وَالمَبَادِئَ الرَّئِيْسِيَّةَ المَطْلُوْبَةَ`
+              ].slice(0, optCount)
+            : useEn
+            ? [
+                `It accurately applies the core principles of ${top}`,
+                `It demonstrates a clear relationship between the main concepts`,
+                `It contradicts the basic rules established in the lesson`,
+                `It provides a valid contextual interpretation`
+              ].slice(0, optCount)
+            : [
+                `Menerapkan langkah yang benar sesuai konsep dasar ${top}`,
+                `Menunjukkan hubungan sebab-akibat yang tepat antarbagian materi`,
+                `Mengabaikan kaidah dasar yang diajarkan pada materi ${top}`,
+                `Memberikan kesimpulan yang sesuai dengan bukti pengamatan`
+              ].slice(0, optCount);
 
-      const translateSubjectToAr = (subj = '') => {
-        const map = {
-          'Bahasa Arab': 'اللُّغَةُ العَرَبِيَّةُ',
-          "Al-Qur'an Hadis": 'القُرْآنُ وَالحَدِيْثُ',
-          'Akidah Akhlak': 'العَقِيْدَةُ وَالأَخْلَاقُ',
-          'Fikih': 'الفِقْهُ',
-          'Sejarah Kebudayaan Islam (SKI)': 'تَارِيْخُ الثَّقَافَةِ الإِسْلَامِيَّةِ',
-          'Matematika': 'الرِّيَاضِيَّاتُ',
-          'IPA': 'العُلُوْمُ الطَّبِيْعِيَّةُ',
-          'IPS': 'العُلُوْمُ الاجْتِمَاعِيَّةُ',
-          'IPAS (Ilmu Pengetahuan Alam dan Sosial)': 'العُلُوْمُ الطَّبِيْعِيَّةُ وَالاجْتِمَاعِيَّةُ'
-        };
-        return map[String(subj || '').trim()] || subj;
-      };
-
-      const translateAssessmentToEn = (assess = '') => {
-        const a = String(assess || '').trim();
-        if (a.includes('Penilaian Harian')) return 'Daily Assessment (PH)';
-        if (a.includes('STS')) return 'Mid-Semester Summative Assessment (STS)';
-        if (a.includes('SAS')) return 'Final Semester Summative Assessment (SAS)';
-        if (a === 'TKA') return 'Academic Ability Test (TKA)';
-        if (a === 'OSN') return 'National Science Olympiad (OSN)';
-        if (a === 'OMI') return 'Indonesian Madrasah Olympiad (OMI)';
-        return a;
-      };
-
-      const translateAssessmentToAr = (assess = '') => {
-        const a = String(assess || '').trim();
-        if (a.includes('Penilaian Harian')) return 'التَّقْيِيْمُ اليَوْمِيُّ';
-        if (a.includes('STS')) return 'اخْتِبَارُ مُنْتَصَفِ الفَصْلِ الدِّرَاسِيِّ';
-        if (a.includes('SAS')) return 'اخْتِبَارُ نِهَايَةِ الفَصْلِ الدِّرَاسِيِّ';
-        if (a === 'TKA') return 'اخْتِبَارُ القُدُرَاتِ الأَكَادِيْمِيَّةِ';
-        if (a === 'OSN') return 'أُولِمْبِيَادُ العُلُوْمِ الوَطَنِيُّ';
-        if (a === 'OMI') return 'أُولِمْبِيَادُ المَدَارِسِ الإِسْلَامِيَّةِ';
-        return a;
-      };
-
-      const translateGradeToEn = (grd = '') => String(grd || '').replace(/^Kelas\s+/i, 'Grade ');
-
-      const translateBentukSoalToEn = (bentuk = '') => {
-        const b = String(bentuk || '').toLowerCase();
-        if (b.includes('kompleks')) return 'Complex Multiple Choice';
-        if (b.includes('jodoh')) return 'Matching';
-        if (b.includes('benar') || b.includes('salah') || b.includes('true')) return 'True / False';
-        if (b.includes('isian') || b.includes('singkat')) return 'Short Answer';
-        if (b.includes('uraian') || b.includes('esai')) return 'Essay';
-        return 'Multiple Choice';
-      };
-
-      const translateBentukSoalToAr = (bentuk = '') => {
-        const b = String(bentuk || '').toLowerCase();
-        if (b.includes('kompleks')) return 'اخْتِيَارٌ مُتَعَدِّدٌ مُرَكَّبٌ';
-        if (b.includes('jodoh')) return 'المُطَابَقَةُ وَالتَّوْصِيْلُ';
-        if (b.includes('benar') || b.includes('salah')) return 'الصَّوَابُ وَالخَطَأُ';
-        if (b.includes('isian') || b.includes('singkat')) return 'إِجَابَةٌ قَصِيْرَةٌ';
-        if (b.includes('uraian') || b.includes('esai')) return 'سُؤَالٌ مَقَالِيٌّ';
-        return 'اخْتِيَارٌ مِنْ مُتَعَدِّدٍ';
-      };
-
-      const sanitizeRawJsonMath = (jsonStr = '') => {
-        if (!jsonStr) return '';
-        return String(jsonStr).replace(
-          /\\+(frac|dfrac|tfrac|sqrt|lim|int|sum|prod|vec|hat|bar|overline|underline|sin|cos|tan|log|ln|times|div|pm|cdot|leq|geq|neq|approx|infty|degree|circ|pi|theta|alpha|beta|gamma|delta|Delta|Omega|rightarrow|to|leftarrow|leftrightarrow|rightleftharpoons|Rightarrow|Leftrightarrow|binom|text|mathrm)(?![a-zA-Z])/g,
-          '\\\\$1'
-        );
-      };
-
-      const extractBalancedBraceGroup = (str, openBraceIdx) => {
-        if (!str || str[openBraceIdx] !== '{') return null;
-        let depth = 0;
-        for (let i = openBraceIdx; i < str.length; i++) {
-          if (str[i] === '{') depth++;
-          else if (str[i] === '}') {
-            depth--;
-            if (depth === 0) return { content: str.slice(openBraceIdx + 1, i), endIndex: i + 1 };
-          }
-        }
-        return null;
-      };
-
-      const convertLatexConstructsToTokens = (inputStr = '') => {
-        let s = String(inputStr || '')
-          .replace(/\\{2,}(?=[a-zA-Z])/g, '\\')
-          .replace(/(?:\\+|\/)+(?:d?frac|tfrac|cfrac|fraq|farc)\b/gi, '\\frac')
-          .replace(/(?:\\+|\/)+sqrt\b/gi, '\\sqrt');
-
-        for (let pass = 0; pass < 8; pass++) {
-          const sqrtRegex = /\\sqrt\s*(?:\[([^\[\]]*)\])?\s*\{/g;
-          const match = sqrtRegex.exec(s);
-          if (!match) break;
-          const grp = extractBalancedBraceGroup(s, match.index + match[0].length - 1);
-          if (!grp) break;
-          s = s.slice(0, match.index) + `⟦SQRT:${grp.content.trim()}::${(match[1] || '').trim()}⟧` + s.slice(grp.endIndex);
+          return {
+            bentukSoal: 'PG Kompleks',
+            question: useAr
+              ? `اقْرَأِ العِبَارَاتِ الآتِيَةَ المُتَعَلِّقَةَ بِمَوْضُوْعِ (${top})، مَا العِبَارَاتُ الصَّحِيْحَةُ مِمَّا يَأْتِي؟`
+              : useEn
+              ? `Read the following statements regarding ${top}. Which of the following statements are correct?`
+              : `Perhatikan studi kasus penerapan konsep ${top} pada mata pelajaran ${subj} (MI) berikut. Manakah pernyataan analisis yang tepat?`,
+            matchingPremises: [],
+            options: rawOpts,
+            answer: `A, B, dan D`,
+            explanation: `Pernyataan A, B, dan D bernilai benar sesuai analisis konsep ${top} jenjang MI.`,
+            bloomLevel,
+            cp: `Memahami dan menganalisis konsep ${top} pada mata pelajaran ${subj} jenjang MI.`,
+            tp: `Peserta didik MI mampu mengevaluasi beberapa pernyataan yang benar terkait ${top}.`,
+            materi: top,
+            indicator: `Disajikan permasalahan mengenai ${top}, peserta didik dapat memilih lebih dari satu pernyataan yang benar.`
+          };
         }
 
-        s = s
-          .replace(/√\s*\{([^{}]+)\}/g, '⟦SQRT:$1::⟧')
-          .replace(/√\s*\(([^()]+)\)/g, '⟦SQRT:$1::⟧')
-          .replace(/√\s*([0-9a-zA-Zπθαβ]+)/g, '⟦SQRT:$1::⟧');
-
-        for (let pass = 0; pass < 10; pass++) {
-          const fracRegex = /\\*\\frac\s*\{/g;
-          const match = fracRegex.exec(s);
-          if (!match) break;
-          const numGrp = extractBalancedBraceGroup(s, match.index + match[0].length - 1);
-          if (!numGrp) break;
-          let afterNumIdx = numGrp.endIndex;
-          while (afterNumIdx < s.length && /\s/.test(s[afterNumIdx])) afterNumIdx++;
-          if (s[afterNumIdx] === '{') {
-            const denGrp = extractBalancedBraceGroup(s, afterNumIdx);
-            if (denGrp) {
-              s = s.slice(0, match.index) + `⟦FRAC:${numGrp.content.trim()}::${denGrp.content.trim()}⟧` + s.slice(denGrp.endIndex);
-              continue;
+        if (bentukSoal === 'Menjodohkan') {
+          const premises = [];
+          const rightOpts = [];
+          for (let i = 0; i < matchCount; i++) {
+            if (isMathSci) {
+              const a = n + i + 2;
+              const b = i + 3;
+              premises.push(`Hasil hitung dari (${a} × ${b}) + ${a}`);
+              rightOpts.push(`${a * b + a}`);
+            } else {
+              const aspects = ['Pengertian Dasar', 'Contoh Penerapan', 'Hikmah / Manfaat', 'Ketentuan Utama', 'Sikap Teladan'];
+              const asp = aspects[i % aspects.length];
+              premises.push(`${asp} pada materi ${top}`);
+              rightOpts.push(`Menjelaskan ${asp.toLowerCase()} sesuai kaidah ${subj}`);
             }
           }
-          break;
-        }
-        return s;
-      };
-
-      const normalizeBrokenMathNotation = (input = '') => {
-        if (input === null || input === undefined) return '';
-        let s = String(input)
-          .replace(/\\r\\n/g, '\n')
-          .replace(/\\n/g, '\n')
-          .replace(/\\\[([\s\S]*?)\\\]/g, '$1')
-          .replace(/\\\(([\s\S]*?)\\\)/g, '$1')
-          .replace(/\$\$([\s\S]*?)\$\$/g, '$1')
-          .replace(/\$([^$\n]+)\$/g, '$1')
-          .replace(/\\(?:text|mathrm|operatorname|mbox)\s*\{([^{}]*)\}/g, '$1');
-
-        s = convertLatexConstructsToTokens(s);
-        s = s
-          .replace(/(?:\\+|\/)times\b/g, '×')
-          .replace(/(?:\\+|\/)div\b/g, '÷')
-          .replace(/(?:\\+|\/)pm\b/g, '±')
-          .replace(/(?:\\+|\/)cdot\b/g, '·')
-          .replace(/(?:\\+|\/)(?:leq|le)\b/g, '≤')
-          .replace(/(?:\\+|\/)(?:geq|ge)\b/g, '≥')
-          .replace(/(?:\\+|\/)(?:neq|ne)\b/g, '≠')
-          .replace(/(?:\\+|\/)approx\b/g, '≈')
-          .replace(/(?:\\+|\/)infty\b/g, '∞')
-          .replace(/(?:\\+|\/)(?:degree|circ)\b/g, '°')
-          .replace(/(?:\\+|\/)pi\b/g, 'π')
-          .replace(/(?:\\+|\/)theta\b/g, 'θ')
-          .replace(/(?:\\+|\/)alpha\b/g, 'α')
-          .replace(/(?:\\+|\/)beta\b/g, 'β')
-          .replace(/(?:\\+|\/)Delta\b/g, 'Δ')
-          .replace(/(?:\\+|\/)(?:rightarrow|to)\b/g, '→')
-          .replace(/\^\s*\{([^{}]+)\}/g, '<sup>$1</sup>')
-          .replace(/\^([+-]?\d+|[a-zA-Z])/g, '<sup>$1</sup>')
-          .replace(/_\s*\{([^{}]+)\}/g, '<sub>$1</sub>')
-          .replace(/([A-Za-z\])])_(\d+|[a-zA-Z])\b/g, '$1<sub>$2</sub>');
-
-        return convertLatexConstructsToTokens(s).trim();
-      };
-
-      const cleanPgkNumbering = (text = '', isOption = false) => {
-        if (!text) return '';
-        let s = String(text)
-          .replace(/\\n/g, '\n')
-          .replace(/[\u2610\u2611\u2612\u25A1\u25A2\u2B1C\u25FB\u25FC]/g, '')
-          .replace(/\(\s*Pilihlah\s+lebih\s+dari\s+satu\s+jawaban\s+yang\s+benar\s*!?\s*\)/gi, '');
-        if (isOption) {
-          s = s.replace(/^\s*(?:[A-Fa-f]|[أبجدهو])\s*[\.\)]\s*/, '');
-        }
-        return s.replace(/\n{3,}/g, '\n\n').trim();
-      };
-
-      const formatMathHtml = (raw = '') => {
-        if (!raw) return '';
-        let out = normalizeBrokenMathNotation(raw);
-        for (let pass = 0; pass < 8; pass++) {
-          let changed = false;
-          out = out.replace(/⟦SQRT:([^⟦⟧]*?)::([^⟦⟧]*?)⟧/g, (_, rad, idx) => {
-            changed = true;
-            const cleanRad = rad.trim();
-            const cleanIdx = idx.trim();
-            return cleanIdx
-              ? `<span class="math-sqrt" data-rad="${encodeURIComponent(cleanRad)}" data-idx="${encodeURIComponent(cleanIdx)}" style="display:inline-flex;align-items:baseline;vertical-align:middle;"><sup style="font-size:0.7em;margin-right:1px;">${cleanIdx}</sup><span>&radic;</span><span style="text-decoration:overline;border-top:1px solid currentColor;padding:0 2px;">${cleanRad}</span></span>`
-              : `<span class="math-sqrt" data-rad="${encodeURIComponent(cleanRad)}" data-idx="" style="display:inline-flex;align-items:baseline;vertical-align:middle;"><span>&radic;</span><span style="text-decoration:overline;border-top:1px solid currentColor;padding:0 2px;">${cleanRad}</span></span>`;
-          });
-          out = out.replace(/⟦FRAC:([^⟦⟧]*?)::([^⟦⟧]*?)⟧/g, (_, num, den) => {
-            changed = true;
-            const cleanNum = num.trim();
-            const cleanDen = den.trim();
-            return `<span class="math-frac" data-num="${encodeURIComponent(cleanNum)}" data-den="${encodeURIComponent(cleanDen)}" style="display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:0.92em;line-height:1.1;margin:0 2px;"><span style="border-bottom:1px solid currentColor;padding:0 3px;">${cleanNum}</span><span style="padding:0 3px;">${cleanDen}</span></span>`;
-          });
-          if (!changed) break;
-        }
-        return out;
-      };
-
-      const wordCompatibleFractions = (html = '') => {
-        if (!html) return '';
-        const container = document.createElement('div');
-        container.innerHTML = String(html);
-        Array.from(container.querySelectorAll('.math-frac')).forEach((el) => {
-          const numRaw = decodeURIComponent(el.getAttribute('data-num') || '');
-          const denRaw = decodeURIComponent(el.getAttribute('data-den') || '');
-          const spanReplacement = document.createElement('span');
-          spanReplacement.innerHTML = `<table style="display:inline-table;vertical-align:middle;border-collapse:collapse;margin:0 2pt;font-family:'Times New Roman',serif;font-size:10pt;line-height:1;"><tr><td style="border-bottom:1pt solid #000;text-align:center;padding:0 2pt 1pt 2pt;">${numRaw}</td></tr><tr><td style="text-align:center;padding:1pt 2pt 0 2pt;">${denRaw}</td></tr></table>`;
-          el.replaceWith(spanReplacement);
-        });
-        return container.innerHTML;
-      };
-
-      const formatMatchingAnswerKey = (rawAnswer = '', premises = []) => {
-        const str = String(rawAnswer || '').trim();
-        const pairs = [...str.matchAll(/(\d+)\s*[-:=–—>]\s*([A-Za-zأبجدهوزحطي])/g)];
-        if (pairs.length > 0) return pairs.map((m) => `${m[1]}-${m[2].toUpperCase()}`).join(', ');
-        if (str) return str;
-        if (Array.isArray(premises) && premises.length > 0) {
-          return premises.map((_, i) => `${i + 1}-${String.fromCharCode(65 + i)}`).join(', ');
-        }
-        return '-';
-      };
-
-      const isMultipleChoice = (q) => {
-        const b = String(q?.bentukSoal || '').toLowerCase();
-        return b === 'pg' || b === 'pilihan ganda' || b === 'multiple choice';
-      };
-
-      const resolveCorrectOptionIndex = (q) => {
-        if (!q || !Array.isArray(q.options) || q.options.length === 0) return 0;
-        const ans = String(q.answer || '').trim();
-        const letterMatch = ans.match(/^\s*([A-Ea-eأبجده])\b/);
-        if (letterMatch) {
-          const ch = letterMatch[1].toUpperCase();
-          const arIdx = ['أ', 'ب', 'ج', 'د', 'ه'].indexOf(ch);
-          if (arIdx !== -1 && arIdx < q.options.length) return arIdx;
-          const idx = ch.charCodeAt(0) - 65;
-          if (idx >= 0 && idx < q.options.length) return idx;
-        }
-        return 0;
-      };
-
-      const balanceMultipleChoiceAnswers = (questions = []) => {
-        const useAr = isArabicActive();
-        return questions.map((q, idx) => {
-          if (!isMultipleChoice(q) || !Array.isArray(q.options) || q.options.length < 2) return q;
-          const currentCorrectIdx = resolveCorrectOptionIndex(q);
-          const targetIdx = idx % q.options.length;
-          const newOpts = [...q.options];
-          if (currentCorrectIdx !== targetIdx && currentCorrectIdx < newOpts.length) {
-            const temp = newOpts[targetIdx];
-            newOpts[targetIdx] = newOpts[currentCorrectIdx];
-            newOpts[currentCorrectIdx] = temp;
+          const distractors = [];
+          for (let d = 0; d < matchDistractorCount; d++) {
+            distractors.push(isMathSci ? `${(n + matchCount + d + 4) * 3}` : `Ketentuan yang tidak berkaitan dengan ${top} (${d + 1})`);
           }
-          const correctLabel = getOptionLabel(targetIdx, useAr);
+          const reversedCorrect = [...rightOpts].reverse();
+          const shuffledOpts = [...reversedCorrect, ...distractors];
+          const pairKeys = premises.map((_, i) => `${i + 1}-${String.fromCharCode(65 + (matchCount - 1 - i))}`).join(', ');
+
           return {
-            ...q,
-            options: newOpts,
-            answer: `${correctLabel}. ${newOpts[targetIdx]}`
+            bentukSoal: 'Menjodohkan',
+            question: `Pasangkanlah setiap pernyataan pada kolom kiri dengan jawaban yang paling tepat pada kolom kanan terkait materi ${top}!`,
+            matchingPremises: premises,
+            options: shuffledOpts,
+            answer: pairKeys,
+            explanation: `Pasangan yang tepat: ${pairKeys}.`,
+            bloomLevel,
+            cp: `Menguasai keterkaitan antarkonsep dalam materi ${top}.`,
+            tp: `Peserta didik MI dapat menjodohkan pernyataan dan pasangan jawaban yang sesuai mengenai ${top}.`,
+            materi: top,
+            indicator: `Disajikan daftar premis dan pilihan jawaban tentang ${top}, peserta didik dapat memasangkan keduanya dengan tepat.`
           };
-        });
+        }
+
+        if (bentukSoal === 'Benar/Salah') {
+          const isTrueKey = idx % 2 === 0;
+          const valA = n + 3;
+          const stmt = isMathSci
+            ? isTrueKey
+              ? `Hasil penjumlahan ${valA * 4} + ${valA * 2} sama dengan ${valA * 6}.`
+              : `Hasil penjumlahan ${valA * 4} + ${valA * 2} sama dengan ${valA * 5}.`
+            : isTrueKey
+            ? `Penerapan konsep ${top} dalam kehidupan sehari-hari mencerminkan pemahaman materi ${subj} yang baik.`
+            : `Dalam mempelajari ${top}, kita boleh mengabaikan aturan dasar yang berlaku.`;
+
+          return {
+            bentukSoal: 'Benar/Salah',
+            question: `Tentukan apakah pernyataan berikut Benar atau Salah!\n"${stmt}"`,
+            matchingPremises: [],
+            options: ['Benar', 'Salah'],
+            answer: isTrueKey ? 'A. Benar' : 'B. Salah',
+            explanation: `Pernyataan tersebut bernilai ${isTrueKey ? 'Benar' : 'Salah'} sesuai konsep inti pada materi ${top}.`,
+            bloomLevel,
+            cp: `Mengevaluasi kebenaran pernyataan konsep pada materi ${top}.`,
+            tp: `Peserta didik MI mampu memverifikasi kebenaran pernyataan terkait ${top}.`,
+            materi: top,
+            indicator: `Disajikan sebuah pernyataan mengenai ${top}, peserta didik dapat menentukan nilai kebenarannya.`
+          };
+        }
+
+        if (bentukSoal === 'Isian Singkat') {
+          const mult = n + 2;
+          const baseVal = 8 * mult;
+          const ansVal = 6 * mult;
+          return {
+            bentukSoal: 'Isian Singkat',
+            question: isMathSci
+              ? `Perbandingan banyak kelereng Ahmad dan Budi adalah 3 : 4. Jika banyak kelereng Budi adalah ${baseVal} butir, maka banyak kelereng Ahmad adalah ... butir.`
+              : `Dalam pelajaran ${subj} mengenai ${top}, sikap atau tindakan utama yang harus diamalkan oleh siswa madrasah adalah ...`,
+            matchingPremises: [],
+            options: [],
+            answer: isMathSci ? `${ansVal}` : `Mengamalkan nilai kebaikan sesuai ajaran ${top}`,
+            explanation: isMathSci
+              ? `Banyak kelereng Ahmad = (3/4) × ${baseVal} = ${ansVal} butir.`
+              : `Jawaban mengacu pada inti pengamalan materi ${top} pada jenjang Madrasah Ibtidaiyah.`,
+            bloomLevel,
+            cp: `Menerapkan konsep esensial pada materi ${top}.`,
+            tp: `Peserta didik MI mampu menentukan jawaban singkat yang tepat pada materi ${top}.`,
+            materi: top,
+            indicator: `Disajikan permasalahan singkat mengenai ${top}, peserta didik dapat menentukan jawabannya dengan tepat.`
+          };
+        }
+
+        if (bentukSoal === 'Uraian') {
+          const pVal = n + 3;
+          return {
+            bentukSoal: 'Uraian',
+            question: isMathSci
+              ? `Sebuah kebun madrasah berbentuk persegi panjang memiliki panjang ${pVal * 3} meter dan lebar ${pVal * 2} meter. Hitunglah keliling dan luas kebun madrasah tersebut beserta langkah-langkahnya!`
+              : `Jelaskan 3 contoh penerapan materi ${top} dalam kehidupan sehari-hari di lingkungan madrasah maupun di rumah beserta manfaatnya!`,
+            matchingPremises: [],
+            options: [],
+            answer: isMathSci
+              ? `Keliling = ${2 * (pVal * 3 + pVal * 2)} meter, Luas = ${pVal * 3 * pVal * 2} m².`
+              : `Siswa menyebutkan 3 contoh konkret pengamalan ${top} di rumah/madrasah beserta manfaat positifnya.`,
+            explanation: isMathSci
+              ? `Keliling = 2 × (p + l) = ${2 * (pVal * 3 + pVal * 2)} m. Luas = p × l = ${pVal * 3 * pVal * 2} m².`
+              : `Penilaian didasarkan pada ketepatan contoh dan kejelasan alasan sesuai materi ${top}.`,
+            bloomLevel,
+            cp: `Menganalisis dan memecahkan permasalahan terkait ${top}.`,
+            tp: `Peserta didik MI mampu menguraikan jawaban mengenai ${top} secara runtut.`,
+            materi: top,
+            indicator: `Disajikan kasus kontekstual mengenai ${top}, peserta didik dapat menguraikan jawabannya secara lengkap.`
+          };
+        }
+
+        // Default: Pilihan Ganda (PG)
+        const pgOpts = useAr
+          ? [
+              `تَطْبِيْقُ القَوَاعِدِ الأَسَاسِيَّةِ وَالأَحْكَامِ الصَّحِيْحَةِ بِشَكْلٍ مُنَظَّمٍ`,
+              `إِهْمَالُ الشُّرُوْطِ الرَّئِيْسِيَّةِ فِي المَوْضُوْعِ`,
+              `الاعْتِمَادُ عَلَى التَّخْمِيْنِ دُوْنَ الرُّجُوْعِ إِلَى الأَدِلَّةِ`,
+              `تَجَاهُلُ النَّتَائِجِ المَتَرَتِّبَةِ عَلَى تَطْبِيْقِ المَفْهُوْمِ`
+            ].slice(0, optCount)
+          : useEn
+          ? [
+              `Applying the core principles of ${top} accurately in daily situations`,
+              `Ignoring the basic rules required in the topic`,
+              `Drawing conclusions without checking the facts`,
+              `Disregarding the main objective of the lesson`
+            ].slice(0, optCount)
+          : [
+              `Memahami konsep dasar ${top} dan menerapkannya secara tepat dalam kehidupan sehari-hari`,
+              `Mengabaikan aturan utama yang berlaku pada materi ${top}`,
+              `Menyimpulkan masalah tanpa memperhatikan fakta yang ada`,
+              `Menolak bekerja sama saat menyelesaikan tugas kelompok`
+            ].slice(0, optCount);
+
+        const targetIdx = idx % pgOpts.length;
+        if (targetIdx !== 0) {
+          const tmp = pgOpts[0];
+          pgOpts[0] = pgOpts[targetIdx];
+          pgOpts[targetIdx] = tmp;
+        }
+
+        return {
+          bentukSoal: 'PG',
+          question: useAr
+            ? `بِنَاءً عَلَى دِرَاسَتِكَ لِمَوْضُوْعِ (${top}) [السُّؤَالُ ${n}]، مَا العِبَارَةُ الأَكْثَرُ دِقَّةً وَصِحَّةً مِمَّا يَأْتِي؟`
+            : useEn
+            ? `Based on ${top} in ${subj} (Question ${n}), which of the following statements is correct?`
+            : `Dalam mempelajari materi ${top} pada mata pelajaran ${subj} (butir ke-${n}), perilaku atau pemahaman yang paling tepat adalah...`,
+          matchingPremises: [],
+          options: pgOpts,
+          answer: `${getOptionLabel(targetIdx, useAr)}. ${pgOpts[targetIdx]}`,
+          explanation: `Jawaban yang tepat adalah ${getOptionLabel(targetIdx, useAr)} karena sesuai dengan kaidah konsep dasar pada materi ${top} jenjang MI.`,
+          bloomLevel,
+          cp: `Memahami konsep ${top} pada mata pelajaran ${subj} jenjang MI.`,
+          tp: `Peserta didik MI mampu menyelesaikan soal terkait ${top} dengan tepat.`,
+          materi: top,
+          indicator: `Disajikan permasalahan mengenai ${top}, peserta didik dapat menentukan jawaban yang tepat.`
+        };
       };
 
       const handleShuffleMultipleChoiceOptions = () => {
         if (!finalQuiz || !Array.isArray(finalQuiz.questions)) return;
         const useAr = isArabicActive();
         const shuffledQuestions = finalQuiz.questions.map((q) => {
-          if (!isMultipleChoice(q) || !Array.isArray(q.options) || q.options.length < 2) return q;
-          const currentIdx = resolveCorrectOptionIndex(q);
+          if (q.bentukSoal !== 'PG' || !Array.isArray(q.options) || q.options.length < 2) return q;
+          const ansLetter = String(q.answer || '').trim().charAt(0).toUpperCase();
+          const currentIdx = Math.max(0, ansLetter.charCodeAt(0) - 65);
           const pairs = q.options.map((opt, i) => ({ opt, isCorrect: i === currentIdx }));
           for (let i = pairs.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -802,8 +602,7 @@
         const { name, value } = e.target;
         const countFields = [
           'pgCount', 'pgKompleksCount', 'menjodohkanCount',
-          'benarSalahCount', 'isianCount', 'uraianCount',
-          'aiIllustrationCount', 'chartCount', 'conceptMapCount'
+          'benarSalahCount', 'isianCount', 'uraianCount'
         ];
         if (countFields.includes(name)) {
           const numVal = value === '' ? '' : Math.max(0, parseInt(value, 10) || 0);
@@ -813,47 +612,7 @@
         setConfig((prev) => ({ ...prev, level: 'MI', [name]: value }));
       };
 
-      // ============================================================================
-      // PEMANGGILAN GEMINI API
-      // ============================================================================
-      const parseAndRecoverQuizJson = (rawText) => {
-        if (!rawText) return null;
-        let cleaned = String(rawText).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-        const firstBrace = cleaned.indexOf('{');
-        const lastBrace = cleaned.lastIndexOf('}');
-        if (firstBrace === -1 || lastBrace === -1) return null;
-        try {
-          return JSON.parse(sanitizeRawJsonMath(cleaned.slice(firstBrace, lastBrace + 1)));
-        } catch (e) {
-          return null;
-        }
-      };
-
-      const callGeminiContentApi = async (payload) => {
-        if (!userApiKey.trim()) {
-          throw new Error('Masukkan API Key Google Gemini Anda terlebih dahulu pada kolom di atas!');
-        }
-        const modelName = 'gemini-2.5-flash';
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(userApiKey.trim())}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          }
-        );
-        if (!res.ok) {
-          const errTxt = await res.text().catch(() => '');
-          throw new Error(`HTTP ${res.status}: ${errTxt.slice(0, 150)}`);
-        }
-        return await res.json();
-      };
-
-      const handleGenerateQuiz = async () => {
-        if (!userApiKey.trim()) {
-          showToast('Mohon isi API Key Google Gemini terlebih dahulu.', 'error');
-          return;
-        }
+      const handleGenerateQuiz = () => {
         if (!config.grade || !config.subject) {
           showToast('Mohon pilih Kelas MI dan Mata Pelajaran terlebih dahulu.', 'error');
           return;
@@ -870,74 +629,30 @@
 
         setLoading(true);
         setGenerationSuccess(false);
-        setProgress(15);
+        setProgress(35);
 
-        if (progressInterval.current) clearInterval(progressInterval.current);
-        progressInterval.current = setInterval(() => {
-          setProgress((prev) => (prev < 88 ? prev + 5 : prev));
-        }, 600);
+        setTimeout(() => {
+          setProgress(75);
+          const plan = [];
+          const pushItems = (cnt, type) => {
+            const c = parseInt(cnt, 10) || 0;
+            for (let i = 0; i < c; i++) plan.push(type);
+          };
+          pushItems(config.pgCount, 'PG');
+          pushItems(config.pgKompleksCount, 'PG Kompleks');
+          pushItems(config.menjodohkanCount, 'Menjodohkan');
+          pushItems(config.benarSalahCount, 'Benar/Salah');
+          pushItems(config.isianCount, 'Isian Singkat');
+          pushItems(config.uraianCount, 'Uraian');
 
-        try {
-          const prompt = `Anda adalah pakar penyusun soal ujian Madrasah Ibtidaiyah (MI) di Indonesia (KKMI Kecamatan Wonomerto).
-Buat naskah soal ujian lengkap sebanyak ${totalQuestions} butir dengan rincian:
-- Kurikulum: ${config.curriculum}
-- Jenjang / Kelas: Madrasah Ibtidaiyah (MI) - ${config.grade}
-- Mata Pelajaran: ${config.subject}
-- Jenis Asesmen: ${config.assessmentType || 'Asesmen Harian'}
-- Bahasa Soal: ${config.language === 'ar' ? 'Bahasa Arab Berharakat Lengkap' : config.language === 'en' ? 'Bahasa Inggris' : 'Bahasa Indonesia'}
-- Materi / Topik: ${config.topic}
-- Rincian Jumlah Bentuk Soal: PG=${config.pgCount}, PG Kompleks=${config.pgKompleksCount}, Menjodohkan=${config.menjodohkanCount}, Benar/Salah=${config.benarSalahCount}, Isian Singkat=${config.isianCount}, Uraian=${config.uraianCount}.
-- Jumlah opsi pilihan: ${config.optionCount} opsi (tanpa awalan huruf A., B., C., D.).
+          const questions = plan.map((bType, idx) => buildLocalQuestionItem(idx, bType, config));
 
-Keluarkan HANYA JSON valid dengan struktur:
-{
-  "title": "Naskah Ujian MI",
-  "questions": [
-    {
-      "bentukSoal": "PG | PG Kompleks | Menjodohkan | Benar/Salah | Isian Singkat | Uraian",
-      "question": "Teks pertanyaan...",
-      "matchingPremises": [],
-      "options": ["Opsi 1", "Opsi 2", "Opsi 3", "Opsi 4"],
-      "answer": "Jawaban benar",
-      "explanation": "Pembahasan lengkap...",
-      "bloomLevel": "C2/C3/C4",
-      "cp": "Capaian Pembelajaran MI",
-      "tp": "Tujuan Pembelajaran MI",
-      "materi": "${config.topic}",
-      "indicator": "Disajikan ..., peserta didik dapat ...",
-      "visualType": "none",
-      "visualDescription": "-"
-    }
-  ]
-}`;
-
-          const rawResponse = await callGeminiContentApi({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.6,
-              responseMimeType: 'application/json'
-            }
-          });
-
-          const rawText = rawResponse?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
-          const parsed = parseAndRecoverQuizJson(rawText);
-
-          if (!parsed || !Array.isArray(parsed.questions) || parsed.questions.length === 0) {
-            throw new Error('Format respons AI tidak terbaca. Silakan klik Buat Soal kembali.');
-          }
-
-          const balancedQuestions = balanceMultipleChoiceAnswers(parsed.questions);
-
-          if (progressInterval.current) clearInterval(progressInterval.current);
-          setProgress(100);
-          setFinalQuiz({ title: parsed.title || 'Naskah Ujian MI', questions: balancedQuestions });
-          setGenerationSuccess(true);
-        } catch (error) {
-          if (progressInterval.current) clearInterval(progressInterval.current);
-          setLoading(false);
-          setGenerationSuccess(false);
-          showToast(`Gagal membuat soal: ${error.message}`, 'error');
-        }
+          setTimeout(() => {
+            setProgress(100);
+            setFinalQuiz({ title: `Naskah Ujian MI - ${config.subject}`, questions });
+            setGenerationSuccess(true);
+          }, 300);
+        }, 300);
       };
 
       const copyRichHtmlToClipboard = async (htmlContent, successMsg) => {
@@ -966,10 +681,15 @@ Keluarkan HANYA JSON valid dengan struktur:
         </div><hr/>`;
 
         finalQuiz.questions.forEach((q, idx) => {
-          html += `<p><b>${idx + 1}.</b> ${wordCompatibleFractions(formatMathHtml(q.question || ''))}</p>`;
-          if (Array.isArray(q.options) && q.options.length > 0) {
+          html += `<p><b>${idx + 1}.</b> ${q.question || ''}</p>`;
+          if (q.bentukSoal === 'Menjodohkan' && Array.isArray(q.matchingPremises)) {
+            q.matchingPremises.forEach((prem, pIdx) => {
+              const opt = q.options?.[pIdx] || '';
+              html += `<p style="margin-left:18pt;">${pIdx + 1}. ${prem} &nbsp;&nbsp;&mdash;&nbsp;&nbsp; <b>${String.fromCharCode(65 + pIdx)}.</b> ${opt}</p>`;
+            });
+          } else if (Array.isArray(q.options) && q.options.length > 0) {
             q.options.forEach((opt, oIdx) => {
-              html += `<p style="margin-left:18pt;"><b>${String.fromCharCode(65 + oIdx)}.</b> ${wordCompatibleFractions(formatMathHtml(opt))}</p>`;
+              html += `<p style="margin-left:18pt;"><b>${String.fromCharCode(65 + oIdx)}.</b> ${opt}</p>`;
             });
           }
         });
@@ -1225,9 +945,9 @@ Keluarkan HANYA JSON valid dengan struktur:
               <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 text-center space-y-6">
                 {!generationSuccess ? (
                   <>
-                    <h2 className="text-2xl font-extrabold text-slate-800">AI Sedang Meracik Soal MI...</h2>
+                    <h2 className="text-2xl font-extrabold text-slate-800">Sedang Menyusun Soal MI...</h2>
                     <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
+                      <div className="h-full bg-emerald-500 transition-all duration-300" style={{ width: `${progress}%` }} />
                     </div>
                     <p className="text-xs font-bold text-emerald-600">{progress}%</p>
                   </>
@@ -1257,31 +977,41 @@ Keluarkan HANYA JSON valid dengan struktur:
                 </p>
               </div>
 
-              {/* Pengaturan API Key Gemini */}
-              <section className="bg-amber-50/70 rounded-3xl border border-amber-200 p-5 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-amber-900 uppercase flex items-center gap-1.5">
-                    <Key size={15} /> Kunci API Google Gemini (Wajib Diisi)
-                  </span>
-                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-[11px] font-bold text-emerald-700 underline">
-                    Dapatkan API Key Gratis
-                  </a>
+              {/* Pilih Kurikulum */}
+              <section className="bg-white rounded-3xl shadow-sm border border-slate-100 p-5 sm:p-6 space-y-4">
+                <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
+                  <BookOpen size={17} className="text-emerald-600" />
+                  <span>Pilih Kurikulum</span>
                 </div>
-                <div className="relative">
-                  <input
-                    type={showApiKeyText ? 'text' : 'password'}
-                    value={userApiKey}
-                    onChange={(e) => setUserApiKey(e.target.value)}
-                    placeholder="Tempel AIzaSy... API Key Gemini Anda di sini"
-                    className="w-full p-3 pr-10 bg-white border border-amber-300 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKeyText((p) => !p)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  >
-                    {showApiKeyText ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { id: 'Merdeka', title: 'Merdeka', sub: 'Deep Learning MI' },
+                    { id: 'KBC', title: 'KBC', sub: 'Kurikulum Berbasis Cinta' },
+                    { id: 'K13', title: 'K13', sub: 'Kurikulum 2013' },
+                    { id: 'Hybrid', title: 'Hybrid', sub: 'Gabungan' }
+                  ].map((cur) => {
+                    const active = config.curriculum === cur.id;
+                    return (
+                      <button
+                        key={cur.id}
+                        type="button"
+                        onClick={() => handleInputChange({ target: { name: 'curriculum', value: cur.id } })}
+                        className={`flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all ${
+                          active
+                            ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-100'
+                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                        }`}
+                      >
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${active ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                          <Layers size={18} />
+                        </div>
+                        <div>
+                          <div className="text-xs sm:text-sm font-bold text-slate-800">{cur.title}</div>
+                          <div className="text-[11px] text-slate-400">{cur.sub}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </section>
 
@@ -1322,6 +1052,28 @@ Keluarkan HANYA JSON valid dengan struktur:
                       <option key={sub} value={sub}>{sub}</option>
                     ))}
                   </select>
+                </div>
+
+                {/* Bahasa Soal */}
+                <div className="grid grid-cols-3 gap-2.5">
+                  {[
+                    { code: 'id', label: '🇮🇩 Bahasa Indonesia' },
+                    { code: 'en', label: '🇬🇧 Bahasa Inggris' },
+                    { code: 'ar', label: '🇸🇦 Bahasa Arab' }
+                  ].map((lang) => (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => setConfig({ ...config, language: lang.code })}
+                      className={`py-2.5 px-3 rounded-xl border text-xs font-bold ${
+                        config.language === lang.code
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-500'
+                          : 'bg-slate-50 text-slate-600 border-slate-200'
+                      }`}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
                 </div>
 
                 <textarea
@@ -1449,17 +1201,33 @@ Keluarkan HANYA JSON valid dengan struktur:
                         <span className="font-bold">{idx + 1}.</span>
                         <div className="space-y-2 w-full">
                           <div className="text-[11px] font-bold text-slate-400 uppercase">{q.bentukSoal || 'PG'}</div>
-                          <div className="text-sm sm:text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: formatMathHtml(q.question || '') }} />
-                          {Array.isArray(q.options) && q.options.length > 0 && (
+                          <div className="text-sm sm:text-base leading-relaxed whitespace-pre-line">{q.question || ''}</div>
+
+                          {q.bentukSoal === 'Menjodohkan' && Array.isArray(q.matchingPremises) ? (
+                            <div className="mt-2 p-4 rounded-2xl bg-slate-50 border grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <div className="text-[11px] font-bold text-slate-400 uppercase mb-1">Pernyataan</div>
+                                {q.matchingPremises.map((prem, pIdx) => (
+                                  <div key={pIdx}>{pIdx + 1}. {prem}</div>
+                                ))}
+                              </div>
+                              <div>
+                                <div className="text-[11px] font-bold text-slate-400 uppercase mb-1">Pilihan Jawaban</div>
+                                {(q.options || []).map((opt, oIdx) => (
+                                  <div key={oIdx}><b>{String.fromCharCode(65 + oIdx)}.</b> {opt}</div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : Array.isArray(q.options) && q.options.length > 0 ? (
                             <div className="space-y-1.5 pt-1">
                               {q.options.map((opt, oIdx) => (
                                 <div key={oIdx} className="flex gap-2.5 text-sm">
-                                  <span className="font-bold">{String.fromCharCode(65 + oIdx)}.</span>
-                                  <span dangerouslySetInnerHTML={{ __html: formatMathHtml(opt) }} />
+                                  <span className="font-bold">{getOptionLabel(oIdx, isArabicActive())}.</span>
+                                  <span>{opt}</span>
                                 </div>
                               ))}
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     ))}
@@ -1471,8 +1239,8 @@ Keluarkan HANYA JSON valid dengan struktur:
                     {finalQuiz.questions.map((q, idx) => (
                       <div key={idx} className="p-4 rounded-2xl bg-slate-50 border space-y-1.5">
                         <div className="text-xs font-extrabold uppercase">Soal No. {idx + 1} ({q.bentukSoal || 'PG'})</div>
-                        <div className="text-sm font-bold text-emerald-700">Kunci Jawaban: <span dangerouslySetInnerHTML={{ __html: formatMathHtml(q.answer || '-') }} /></div>
-                        <div className="text-xs text-slate-600">Pembahasan: <span dangerouslySetInnerHTML={{ __html: formatMathHtml(q.explanation || '-') }} /></div>
+                        <div className="text-sm font-bold text-emerald-700">Kunci Jawaban: {q.answer || '-'}</div>
+                        <div className="text-xs text-slate-600">Pembahasan: {q.explanation || '-'}</div>
                       </div>
                     ))}
                   </div>
